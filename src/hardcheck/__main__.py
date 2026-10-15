@@ -1,5 +1,6 @@
-"""Module entrypoint to run CLI with `python -m hardcheck`."""
-from .cli import main
+"""Run the HardCheck command-line interface as a module."""
+
+from hardcheck.cli import main
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())
