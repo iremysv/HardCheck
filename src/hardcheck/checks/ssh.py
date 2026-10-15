@@ -1,32 +1,97 @@
 """Conservative, read-only checks of OpenSSH daemon configuration."""
 
+import glob
+import shlex
+from dataclasses import dataclass
+from itertools import islice
 from pathlib import Path
 
 from hardcheck.checks.base import BaseCheck
 from hardcheck.models import CheckResult, Severity, Status
 from hardcheck.registry import register_check
+from hardcheck.safe_io import read_regular_text
 
 SSH_CONFIG_PATH = Path("/etc/ssh/sshd_config")
 
 
-def read_ssh_settings(path: Path) -> dict[str, str] | None:
-    """Read global directives; return empty settings for unsupported constructs."""
-    try:
-        content = path.read_text(encoding="utf-8")
-    except (OSError, UnicodeError):
-        return None
+@dataclass(frozen=True)
+class SshConfiguration:
+    """Static global settings and a non-sensitive assessment limitation."""
+
+    settings: dict[str, str]
+    issue: str = ""
+
+
+def inspect_ssh_config(
+    path: Path, include_root: Path | None = None
+) -> SshConfiguration:
+    """Expand global Includes; never claim connection-specific Match evaluation.
+
+    Relative Include paths use /etc/ssh, as specified by OpenSSH. Tests can
+    inject another root. No commands, environment expansion or writes occur.
+    """
+    root = include_root if include_root is not None else Path("/etc/ssh")
     settings: dict[str, str] = {}
-    for raw_line in content.splitlines():
-        line = raw_line.split("#", 1)[0].strip()
-        if not line:
-            continue
-        parts = line.split()
-        directive = parts[0].lower()
-        if directive in {"include", "match"}:
-            return {}
-        if len(parts) > 1:
-            settings.setdefault(directive, parts[1].lower())
-    return settings
+    active: set[Path] = set()
+    files = 0
+    total_bytes = 0
+
+    def visit(current: Path, depth: int) -> None:
+        nonlocal files, total_bytes
+        if depth > 16 or files >= 128:
+            raise ValueError("SSH Include resource limit exceeded")
+        resolved = current.resolve()
+        if resolved in active:
+            raise ValueError("SSH Include cycle detected")
+        files += 1
+        content = read_regular_text(current)
+        total_bytes += len(content.encode("utf-8"))
+        if total_bytes > 2 * 1024 * 1024:
+            raise ValueError("SSH configuration size limit exceeded")
+        active.add(resolved)
+        try:
+            for raw_line in content.splitlines():
+                parts = shlex.split(raw_line, comments=True, posix=True)
+                if not parts:
+                    continue
+                directive, *values = parts
+                directive = directive.lower()
+                if directive == "match":
+                    raise ValueError("Match requires connection-specific evaluation")
+                if directive == "include":
+                    if not values:
+                        raise ValueError("Include requires a path")
+                    for pattern in values:
+                        target = Path(pattern)
+                        if not target.is_absolute():
+                            target = root / target
+                        # Bound expansion before sorting to resist huge directories.
+                        matches = list(islice(glob.iglob(str(target)), 129))
+                        if len(matches) > 128:
+                            raise ValueError("SSH Include resource limit exceeded")
+                        for name in sorted(matches):
+                            visit(Path(name), depth + 1)
+                elif directive in {
+                    "permitrootlogin", "passwordauthentication",
+                    "maxauthtries", "permitemptypasswords",
+                }:
+                    if len(values) != 1:
+                        raise ValueError("Invalid SSH directive arguments")
+                    settings.setdefault(directive, values[0])
+        finally:
+            active.remove(resolved)
+
+    try:
+        visit(path, 0)
+    except (OSError, UnicodeError, ValueError, RuntimeError):
+        return SshConfiguration({}, "SSH configuration could not be fully evaluated")
+    return SshConfiguration(settings)
+
+
+def read_ssh_settings(path: Path) -> dict[str, str] | None:
+    """Compatibility helper; unsupported configuration yields no settings."""
+    result = inspect_ssh_config(path)
+    return result.settings if not result.issue else None
 
 
 class SshSettingCheck(BaseCheck):
@@ -37,9 +102,12 @@ class SshSettingCheck(BaseCheck):
     reference = "https://man.openbsd.org/sshd_config"
     setting: str
 
-    def __init__(self, config_path: Path = SSH_CONFIG_PATH) -> None:
+    def __init__(
+        self, config_path: Path = SSH_CONFIG_PATH, include_root: Path | None = None
+    ) -> None:
         """Allow dependency injection of the configuration path."""
         self.config_path = config_path
+        self.include_root = include_root
 
     def is_secure(self, value: str) -> bool:
         """Return whether a directive value satisfies the policy."""
@@ -47,13 +115,20 @@ class SshSettingCheck(BaseCheck):
 
     def run(self) -> CheckResult:
         """Inspect the configuration without making changes."""
-        settings = read_ssh_settings(self.config_path)
-        if settings is None:
-            return self.result(Status.SKIP)
-        value = settings.get(self.setting.lower())
+        try:
+            self.config_path.stat()
+        except FileNotFoundError:
+            return self.result(Status.SKIP, "SSH configuration is absent")
+        except OSError:
+            return self.result(Status.WARN, "SSH configuration is unavailable")
+        config = inspect_ssh_config(self.config_path, self.include_root)
+        if config.issue:
+            return self.result(Status.WARN, config.issue)
+        value = config.settings.get(self.setting.lower())
         if value is None:
-            return self.result(Status.WARN)
+            return self.result(Status.WARN, "Directive is not explicitly configured")
         return self.result(Status.PASS if self.is_secure(value) else Status.FAIL)
+
 
 
 @register_check

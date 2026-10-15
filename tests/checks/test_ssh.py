@@ -41,8 +41,11 @@ def test_missing_directive_is_warning(tmp_path):
     assert SshRootLoginDisabledCheck(config).run().status == Status.WARN
 
 
-def test_include_is_conservative(tmp_path):
-    """Included configuration should not create a false PASS."""
+def test_match_is_conservative(tmp_path):
+    """Conditional configuration should not create a false PASS."""
     config = tmp_path / "sshd_config"
-    config.write_text("PermitRootLogin no\nInclude conf.d/*.conf\n", encoding="utf-8")
+    config.write_text(
+        "PermitRootLogin no\nMatch User example\nPermitRootLogin yes\n",
+        encoding="utf-8",
+    )
     assert SshRootLoginDisabledCheck(config).run().status == Status.WARN

@@ -1,0 +1,6 @@
+# Metadata overrides only; omitted checks retain built-in behavior.
+version: 1
+checks:
+  SSH-001:
+    enabled: true
+    severity: critical

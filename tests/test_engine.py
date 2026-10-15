@@ -13,11 +13,23 @@ def test_engine_collects_four_ssh_results(monkeypatch, tmp_path):
         "MaxAuthTries 4\nPermitEmptyPasswords no\n",
         encoding="utf-8",
     )
-    monkeypatch.setattr(
-        ssh.SshSettingCheck,
-        "__init__",
-        lambda self: setattr(self, "config_path", config),
-    )
+    def fixture_init(self):
+        self.config_path = config
+        self.include_root = tmp_path
+
+    monkeypatch.setattr(ssh.SshSettingCheck, "__init__", fixture_init)
     results = run_checks()
     assert len(results) == 4
     assert all(result.status == Status.PASS for result in results)
+
+
+def test_check_error_does_not_stop_other_checks(monkeypatch):
+    """Exceptions become ERROR without exposing exception text."""
+    def broken(self):
+        raise RuntimeError("sensitive fixture data")
+
+    monkeypatch.setattr(ssh.SshSettingCheck, "run", broken)
+    results = run_checks()
+    assert len(results) == 4
+    assert all(result.status == Status.ERROR for result in results)
+    assert all("sensitive" not in result.detail for result in results)

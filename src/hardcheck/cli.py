@@ -1,10 +1,13 @@
 """Command-line interface for HardCheck."""
 
 import argparse
+import sys
+from pathlib import Path
 
 from hardcheck import __version__
+from hardcheck.config import ConfigError, load_policy
 from hardcheck.engine import run_checks
-from hardcheck.models import Status
+from hardcheck.models import Severity, Status
 from hardcheck.registry import get_registered_checks
 
 
@@ -34,10 +37,21 @@ def main(argv: list[str] | None = None) -> int:
         for check_class in get_registered_checks():
             print(check_class.check_id)
         return 0
-    if arguments.format != "terminal" or arguments.output or arguments.config:
+    if arguments.format != "terminal" or arguments.output:
         print("This option is not available in the initial release.")
         return 2
-    results = run_checks()
+    try:
+        policy = load_policy(Path(arguments.config)) if arguments.config else None
+    except ConfigError as exc:
+        print(f"Invalid configuration: {exc}", file=sys.stderr)
+        return 2
+    results = run_checks(policy)
+    if arguments.min_severity:
+        priorities = list(Severity)
+        minimum = priorities.index(Severity(arguments.min_severity))
+        results = [r for r in results if priorities.index(r.severity) >= minimum]
     for result in results:
         print(f"{result.check_id}: {result.status.value}")
+    if any(result.status == Status.ERROR for result in results):
+        return 2
     return 1 if any(result.status == Status.FAIL for result in results) else 0
