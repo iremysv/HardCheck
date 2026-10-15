@@ -2,7 +2,15 @@
 
 from abc import ABC, abstractmethod
 
-from hardcheck.models import CheckResult, Severity, Status
+from hardcheck.catalog import GUIDANCE
+from hardcheck.models import (
+    CheckResult,
+    Evidence,
+    EvidenceKey,
+    EvidenceValue,
+    Severity,
+    Status,
+)
 
 
 class BaseCheck(ABC):
@@ -13,9 +21,16 @@ class BaseCheck(ABC):
     severity: Severity
     reference: str
 
-    def result(self, status: Status, detail: str = "") -> CheckResult:
+    def result(
+        self,
+        status: Status,
+        detail: str = "",
+        *,
+        evidence: tuple[Evidence, ...] = (),
+    ) -> CheckResult:
         """Create a consistent result with localization keys."""
         prefix = f"checks.{self.check_id}"
+        guidance = GUIDANCE.get(self.check_id)
         return CheckResult(
             check_id=self.check_id,
             title_key=f"{prefix}.title",
@@ -26,6 +41,12 @@ class BaseCheck(ABC):
             remediation_key=f"{prefix}.remediation",
             reference=self.reference,
             detail=detail,
+            title=guidance.title if guidance else self.check_id,
+            expected=guidance.expected if guidance else "Not specified",
+            rationale=guidance.rationale if guidance else "Not specified",
+            remediation=guidance.remediation if guidance else "Manual review required",
+            evidence=evidence
+            or (Evidence(EvidenceKey.ASSESSMENT, EvidenceValue.UNKNOWN),),
         )
 
     @abstractmethod
