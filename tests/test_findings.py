@@ -83,3 +83,21 @@ def test_account_evidence_contains_counts_without_identities(tmp_path):
     result = RootUidCheck(passwd).run()
     assert {e.key: e.value for e in result.evidence}[EvidenceKey.MATCHES] == 1
     assert "private-user" not in repr(result)
+
+
+def test_filesystem_evidence_is_numeric_without_private_paths(tmp_path):
+    import os
+
+    from hardcheck.checks.filesystem import ShadowPermissionsCheck
+    from hardcheck.checks.world_writable import WorldWritableEtcCheck
+
+    path = tmp_path / "secret-private-filename"
+    path.write_text("private-content")
+    path.chmod(0o666)
+    result = ShadowPermissionsCheck(path, os.getuid()).run()
+    assert {e.key: e.value for e in result.evidence}[EvidenceKey.MODE] == 0o666
+    assert "secret-private-filename" not in repr(result)
+    result = WorldWritableEtcCheck(tmp_path).run()
+    assert {e.key: e.value for e in result.evidence}[EvidenceKey.MATCHES] == 1
+    assert "secret-private-filename" not in repr(result)
+    assert "private-content" not in repr(result)

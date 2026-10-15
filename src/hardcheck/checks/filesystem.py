@@ -4,7 +4,14 @@ import stat
 from pathlib import Path
 
 from hardcheck.checks.base import BaseCheck
-from hardcheck.models import CheckResult, Severity, Status
+from hardcheck.models import (
+    CheckResult,
+    Evidence,
+    EvidenceKey,
+    EvidenceValue,
+    Severity,
+    Status,
+)
 
 
 class MetadataCheck(BaseCheck):
@@ -34,6 +41,16 @@ class MetadataCheck(BaseCheck):
         return self.result(
             Status.PASS if secure else Status.FAIL,
             "Owner and mode bits assessed; ACLs and parent paths not assessed",
+            evidence=(
+                Evidence(EvidenceKey.OWNER_UID, info.st_uid),
+                Evidence(EvidenceKey.MODE, stat.S_IMODE(info.st_mode)),
+                Evidence(
+                    EvidenceKey.STICKY,
+                    EvidenceValue.YES
+                    if info.st_mode & stat.S_ISVTX
+                    else EvidenceValue.NO,
+                ),
+            ),
         )
 
 
@@ -59,10 +76,7 @@ class ShadowPermissionsCheck(MetadataCheck):
         super().__init__(path, expected_uid)
 
     def evaluate(self, info) -> bool:
-        return (
-            stat.S_ISREG(info.st_mode)
-            and stat.S_IMODE(info.st_mode) & ~0o640 == 0
-        )
+        return stat.S_ISREG(info.st_mode) and stat.S_IMODE(info.st_mode) & ~0o640 == 0
 
 
 class TmpStickyCheck(MetadataCheck):

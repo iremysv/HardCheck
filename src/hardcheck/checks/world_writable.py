@@ -5,7 +5,14 @@ import stat
 from pathlib import Path
 
 from hardcheck.checks.base import BaseCheck
-from hardcheck.models import CheckResult, Severity, Status
+from hardcheck.models import (
+    CheckResult,
+    Evidence,
+    EvidenceKey,
+    EvidenceValue,
+    Severity,
+    Status,
+)
 
 
 class TraversalLimit(ValueError):
@@ -21,7 +28,10 @@ class WorldWritableEtcCheck(BaseCheck):
     reference = "https://man7.org/linux/man-pages/man7/inode.7.html"
 
     def __init__(
-        self, root: Path = Path("/etc"), *, max_entries: int = 20000,
+        self,
+        root: Path = Path("/etc"),
+        *,
+        max_entries: int = 20000,
         max_depth: int = 64,
     ) -> None:
         self.root = root
@@ -70,7 +80,8 @@ class WorldWritableEtcCheck(BaseCheck):
                                 # Detect replacement between stat and open.
                                 actual = os.fstat(child)
                                 if (actual.st_dev, actual.st_ino) != (
-                                    metadata.st_dev, metadata.st_ino
+                                    metadata.st_dev,
+                                    metadata.st_ino,
                                 ):
                                     incomplete = True
                                 else:
@@ -94,4 +105,12 @@ class WorldWritableEtcCheck(BaseCheck):
             status,
             f"World-writable regular files: {findings}; traversal {coverage}; "
             "symlinks and special files excluded; ACLs not assessed",
+            evidence=(
+                Evidence(EvidenceKey.MATCHES, findings),
+                Evidence(EvidenceKey.FILES, max(0, min(count, self.max_entries))),
+                Evidence(
+                    EvidenceKey.COVERAGE,
+                    EvidenceValue.PARTIAL if incomplete else EvidenceValue.COMPLETE,
+                ),
+            ),
         )
