@@ -14,7 +14,11 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--version", action="version", version=__version__)
     commands = parser.add_subparsers(dest="command", required=True)
     scan = commands.add_parser("scan", help="Run security checks")
-    scan.add_argument("--format", choices=("terminal", "json", "html"), default="terminal")
+    scan.add_argument(
+        "--format",
+        choices=("terminal", "json", "html"),
+        default="terminal",
+    )
     scan.add_argument("--output")
     scan.add_argument("--lang", choices=("en", "tr"), default="en")
     scan.add_argument("--config")
