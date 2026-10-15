@@ -1,9 +1,11 @@
 """Conservative, read-only checks of OpenSSH daemon configuration."""
 
+import fnmatch
 import glob
+import os
+import re
 import shlex
 from dataclasses import dataclass
-from itertools import islice
 from pathlib import Path
 
 from hardcheck.checks.base import BaseCheck
@@ -51,7 +53,11 @@ def inspect_ssh_config(
         active.add(resolved)
         try:
             for raw_line in content.splitlines():
-                parts = shlex.split(raw_line, comments=True, posix=True)
+                lexer = shlex.shlex(raw_line, posix=True)
+                lexer.whitespace_split = True
+                lexer.quotes = '"'
+                lexer.escape = ""
+                parts = list(lexer)
                 if not parts:
                     continue
                 directive, *values = parts
@@ -65,10 +71,26 @@ def inspect_ssh_config(
                         target = Path(pattern)
                         if not target.is_absolute():
                             target = root / target
-                        # Bound expansion before sorting to resist huge directories.
-                        matches = list(islice(glob.iglob(str(target)), 129))
-                        if len(matches) > 128:
-                            raise ValueError("SSH Include resource limit exceeded")
+                        # glob silently ignores directory permission errors. Scan
+                        # explicitly so unreadable Includes cannot produce PASS.
+                        if glob.has_magic(str(target.parent)) or "**" in target.name:
+                            raise ValueError("Unsupported Include directory pattern")
+                        matches = []
+                        try:
+                            with os.scandir(target.parent) as entries:
+                                for index, entry in enumerate(entries):
+                                    if index >= 4096:
+                                        raise ValueError("Include directory too large")
+                                    if entry.name.startswith(".") and not (
+                                        target.name.startswith(".")
+                                    ):
+                                        continue
+                                    if fnmatch.fnmatchcase(entry.name, target.name):
+                                        matches.append(entry.path)
+                                        if len(matches) > 128:
+                                            raise ValueError("Too many Include matches")
+                        except FileNotFoundError:
+                            pass
                         for name in sorted(matches):
                             visit(Path(name), depth + 1)
                 elif directive in {
@@ -165,7 +187,7 @@ class SshMaxAuthTriesCheck(SshSettingCheck):
     def is_secure(self, value: str) -> bool:
         """Require an integer between one and four."""
         try:
-            return 1 <= int(value) <= 4
+            return bool(re.fullmatch(r"[0-9]{1,10}", value)) and 1 <= int(value) <= 4
         except ValueError:
             return False
 

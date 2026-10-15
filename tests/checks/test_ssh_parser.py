@@ -96,3 +96,38 @@ def test_permission_failure_is_warning(tmp_path, monkeypatch):
 
     monkeypatch.setattr(ssh, "read_regular_text", denied)
     assert SshRootLoginDisabledCheck(config).run().status == Status.WARN
+
+
+@pytest.mark.parametrize("value", ["0_4", "+4", "４", "-1", "0", "5"])
+def test_max_auth_tries_rejects_non_decimal_and_out_of_policy(tmp_path, value):
+    from hardcheck.checks.ssh import SshMaxAuthTriesCheck
+
+    config = tmp_path / "sshd_config"
+    config.write_text(f"MaxAuthTries {value}\n")
+    assert SshMaxAuthTriesCheck(config).run().status == Status.FAIL
+
+
+@pytest.mark.parametrize("value", ["'no'", "n" + chr(92) + "o"])
+def test_shell_only_quoting_cannot_create_pass(tmp_path, value):
+    config = tmp_path / "sshd_config"
+    config.write_text(f"PermitRootLogin {value}\n")
+    assert SshRootLoginDisabledCheck(config).run().status != Status.PASS
+
+
+def test_unreadable_include_directory_does_not_look_empty(tmp_path, monkeypatch):
+    import hardcheck.checks.ssh as ssh
+
+    config = tmp_path / "sshd_config"
+    config.write_text("PermitRootLogin no\nInclude conf.d/*.conf\n")
+
+    def denied(*args):
+        raise PermissionError
+
+    monkeypatch.setattr(ssh.os, "scandir", denied)
+    assert SshRootLoginDisabledCheck(config, tmp_path).run().status == Status.WARN
+
+
+def test_unsupported_directory_glob_is_explicitly_uncertain(tmp_path):
+    config = tmp_path / "sshd_config"
+    config.write_text("PermitRootLogin no\nInclude */policy.conf\n")
+    assert SshRootLoginDisabledCheck(config, tmp_path).run().status == Status.WARN
