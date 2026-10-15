@@ -37,8 +37,12 @@ def main(argv: list[str] | None = None) -> int:
         for check_class in get_registered_checks():
             print(check_class.check_id)
         return 0
-    if arguments.format != "terminal" or arguments.output:
-        print("This option is not available in the initial release.")
+    if (
+        arguments.format != "terminal"
+        or arguments.output is not None
+        or arguments.lang != "en"
+    ):
+        print("This option is not available in the initial release.", file=sys.stderr)
         return 2
     try:
         policy = load_policy(Path(arguments.config)) if arguments.config else None
@@ -46,12 +50,14 @@ def main(argv: list[str] | None = None) -> int:
         print(f"Invalid configuration: {exc}", file=sys.stderr)
         return 2
     results = run_checks(policy)
+    has_errors = any(result.status == Status.ERROR for result in results)
     if arguments.min_severity:
         priorities = list(Severity)
         minimum = priorities.index(Severity(arguments.min_severity))
         results = [r for r in results if priorities.index(r.severity) >= minimum]
     for result in results:
-        print(f"{result.check_id}: {result.status.value}")
-    if any(result.status == Status.ERROR for result in results):
+        detail = f" — {result.detail}" if result.detail else ""
+        print(f"{result.check_id}: {result.status.value}{detail}")
+    if has_errors:
         return 2
     return 1 if any(result.status == Status.FAIL for result in results) else 0

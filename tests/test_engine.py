@@ -33,3 +33,15 @@ def test_check_error_does_not_stop_other_checks(monkeypatch):
     assert len(results) == 4
     assert all(result.status == Status.ERROR for result in results)
     assert all("sensitive" not in result.detail for result in results)
+
+
+def test_constructor_error_is_isolated(monkeypatch):
+    """A failed constructor cannot abort the entire audit."""
+    def broken(self):
+        raise PermissionError("private fixture path")
+
+    monkeypatch.setattr(ssh.SshSettingCheck, "__init__", broken)
+    results = run_checks()
+    assert len(results) == 4
+    assert all(result.status == Status.ERROR for result in results)
+    assert all("private" not in result.detail for result in results)

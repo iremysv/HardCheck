@@ -94,5 +94,38 @@ def test_cli_applies_policy_and_reports_engine_errors(tmp_path, monkeypatch, cap
     assert main(["scan", "--config", str(path)]) == 2
     assert seen[0].rules["SSH-001"].severity == Severity.CRITICAL
     assert "SSH-001: ERROR" in capsys.readouterr().out
-    assert main(["scan", "--min-severity", "critical"]) == 0
+    assert main(["scan", "--min-severity", "critical"]) == 2
     assert not capsys.readouterr().out
+
+
+def test_disabled_check_does_not_construct_and_keeps_severity(tmp_path, monkeypatch):
+    from hardcheck.checks.ssh import SshRootLoginDisabledCheck, SshSettingCheck
+
+    path = tmp_path / "policy.yaml"
+    path.write_text(
+        "version: 1\nchecks: {SSH-001: {enabled: false, severity: critical}}"
+    )
+
+    def forbidden(self):
+        raise AssertionError("Disabled constructors must not run")
+
+    monkeypatch.setattr(SshRootLoginDisabledCheck, "__init__", forbidden)
+    monkeypatch.setattr(SshSettingCheck, "run", lambda self: self.result(Status.WARN))
+    results = run_checks(load_policy(path))
+    assert results[0].status == Status.SKIP
+    assert results[0].severity == Severity.CRITICAL
+
+
+@pytest.mark.parametrize("args", [
+    ["--lang", "tr"], ["--format", "json"], ["--format", "html"],
+    ["--output", ""],
+])
+def test_unimplemented_options_do_not_silently_succeed(args, monkeypatch, capsys):
+    import hardcheck.cli as cli
+
+    def forbidden(*args):
+        raise AssertionError("Unsupported options must not scan")
+
+    monkeypatch.setattr(cli, "run_checks", forbidden)
+    assert main(["scan", *args]) == 2
+    assert "not available" in capsys.readouterr().err
