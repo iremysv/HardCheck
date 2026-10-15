@@ -65,3 +65,21 @@ def test_password_policy_evidence_reports_credits(tmp_path):
         EvidenceKey.CREDIT: 1,
         EvidenceKey.ENFORCING: 1,
     }
+
+
+def test_account_evidence_contains_counts_without_identities(tmp_path):
+    from hardcheck.checks.users import EmptyPasswordCheck, RootUidCheck
+
+    shadow = tmp_path / "shadow"
+    shadow.write_text("private-user::20000:0:90:7:::\nroot:!:20000:0:90:7:::\n")
+    result = EmptyPasswordCheck(shadow).run()
+    assert {e.key: e.value for e in result.evidence} == {
+        EvidenceKey.RECORDS: 2,
+        EvidenceKey.MATCHES: 1,
+    }
+    assert "private-user" not in repr(result)
+    passwd = tmp_path / "passwd"
+    passwd.write_text("root:x:0:0::/:/bin/sh\nprivate-user:x:0:0::/:/bin/sh\n")
+    result = RootUidCheck(passwd).run()
+    assert {e.key: e.value for e in result.evidence}[EvidenceKey.MATCHES] == 1
+    assert "private-user" not in repr(result)

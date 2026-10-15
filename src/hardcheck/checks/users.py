@@ -4,7 +4,7 @@ import re
 from pathlib import Path
 
 from hardcheck.checks.base import BaseCheck
-from hardcheck.models import CheckResult, Severity, Status
+from hardcheck.models import CheckResult, Evidence, EvidenceKey, Severity, Status
 from hardcheck.safe_io import read_regular_text
 
 
@@ -40,7 +40,22 @@ class AccountCheck(BaseCheck):
                 return self.result(Status.WARN, "Unsupported local account records")
             names.add(row[0])
         status = self.evaluate(rows)
-        return self.result(status, "Local file assessment; network accounts excluded")
+        facts = [Evidence(EvidenceKey.RECORDS, len(rows))]
+        if status in {Status.PASS, Status.FAIL}:
+            if self.check_id == "USR-001":
+                matches = sum(row[1] == "" for row in rows)
+            else:
+                extra = sum(int(row[2]) == 0 and row[0] != "root" for row in rows)
+                missing_root = not any(
+                    row[0] == "root" and int(row[2]) == 0 for row in rows
+                )
+                matches = extra + int(missing_root)
+            facts.append(Evidence(EvidenceKey.MATCHES, matches))
+        return self.result(
+            status,
+            "Local file assessment; network accounts excluded",
+            evidence=tuple(facts),
+        )
 
 
 class EmptyPasswordCheck(AccountCheck):
