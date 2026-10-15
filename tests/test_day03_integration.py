@@ -29,12 +29,26 @@ def fake_system(tmp_path, monkeypatch):
     (tmp_path / "tmp").chmod(0o1777)
     (tmp_path / "etc").mkdir()
     targets = {
-        "USR-001": "shadow", "USR-002": "passwd", "USR-003": "login.defs",
-        "USR-004": "pwquality.conf", "FS-001": "passwd", "FS-002": "shadow",
-        "FS-003": "tmp", "FS-004": "etc",
+        "USR-001": "shadow",
+        "USR-002": "passwd",
+        "USR-003": "login.defs",
+        "USR-004": "pwquality.conf",
+        "FS-001": "passwd",
+        "FS-002": "shadow",
+        "FS-003": "tmp",
+        "FS-004": "etc",
     }
-    for check in get_registered_checks():
+    import hardcheck.engine as engine
+
+    checks = tuple(
+        c
+        for c in get_registered_checks()
+        if c.check_id.startswith(("FS-", "USR-", "SSH-"))
+    )
+    monkeypatch.setattr(engine, "get_registered_checks", lambda: checks)
+    for check in checks:
         if check.check_id.startswith("SSH-"):
+
             def init(self):
                 self.config_path = tmp_path / "sshd_config"
                 self.include_root = tmp_path
@@ -49,6 +63,7 @@ def fake_system(tmp_path, monkeypatch):
             def init(self, target=target):
                 self.path = target
                 self.expected_uid = os.getuid()
+
         monkeypatch.setattr(check, "__init__", init)
     return tmp_path
 
@@ -85,5 +100,5 @@ def test_cli_full_scan_uses_all_twelve_checks(fake_system, capsys):
 def test_registration_is_idempotent_without_scanning(capsys):
     before = get_registered_checks()
     assert main(["list-checks"]) == 0
-    assert len(capsys.readouterr().out.splitlines()) == 12
+    assert len(capsys.readouterr().out.splitlines()) == 18
     assert before == get_registered_checks()

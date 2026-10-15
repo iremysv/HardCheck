@@ -28,3 +28,14 @@ def test_cgroup_and_openrc(tmp_path):
     env = detect_environment(tmp_path, "Linux")
     assert env.container is True
     assert env.service_manager == "openrc"
+
+
+def test_permission_denied_environment_remains_unknown(tmp_path, monkeypatch):
+    from pathlib import Path
+
+    def denied(*args):
+        raise PermissionError
+
+    monkeypatch.setattr(Path, "is_dir", denied)
+    env = detect_environment(tmp_path, "Linux")
+    assert env.service_manager == "unknown"

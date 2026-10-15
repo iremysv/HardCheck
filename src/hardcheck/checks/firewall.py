@@ -38,6 +38,8 @@ class FirewallCheck(BaseCheck):
                     items = document["nftables"]
                     if not isinstance(items, list):
                         raise ValueError
+                    if any(isinstance(item, dict) and "rule" in item for item in items):
+                        uncertain = True
                     for item in items:
                         chain = item.get("chain", {})
                         if (
@@ -50,6 +52,8 @@ class FirewallCheck(BaseCheck):
                 else:
                     lines = response.output.splitlines()
                     active = "-P INPUT DROP" in lines
+                    if any(line.startswith("-A INPUT ") for line in lines):
+                        uncertain = True
                     if not any(line.startswith("-P INPUT ") for line in lines):
                         uncertain = True
                 if active:

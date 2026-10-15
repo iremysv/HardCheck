@@ -64,3 +64,17 @@ def test_nft_base_chain_and_unavailable(monkeypatch):
         firewall, "run_query", lambda name: CommandResult("done", "", 1)
     )
     assert firewall.FirewallCheck().run().status == Status.WARN
+
+
+def test_complex_rules_are_uncertain_instead_of_false_failure(monkeypatch):
+    output = '{"nftables": [{"rule": {"chain": "input"}}]}'
+    monkeypatch.setattr(
+        firewall,
+        "run_query",
+        lambda name: (
+            CommandResult("done", output, 0)
+            if name == "nft"
+            else CommandResult("missing")
+        ),
+    )
+    assert firewall.FirewallCheck().run().status == Status.WARN

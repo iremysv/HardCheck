@@ -33,10 +33,13 @@ def detect_environment(
     except (OSError, UnicodeError, ValueError):
         pass
     manager = "unknown"
-    if (root / "run/systemd/system").is_dir():
-        manager = "systemd"
-    elif (root / "run/openrc").is_dir():
-        manager = "openrc"
+    try:
+        if (root / "run/systemd/system").is_dir():
+            manager = "systemd"
+        elif (root / "run/openrc").is_dir():
+            manager = "openrc"
+    except OSError:
+        pass
     container = None
     try:
         if (root / ".dockerenv").exists() or (root / "run/.containerenv").exists():

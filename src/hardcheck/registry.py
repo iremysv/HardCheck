@@ -29,22 +29,39 @@ def load_builtin_checks() -> None:
         ShadowPermissionsCheck,
         TmpStickyCheck,
     )
+    from hardcheck.checks.firewall import FirewallCheck
+    from hardcheck.checks.listeners import LegacyListenerCheck
     from hardcheck.checks.password_policy import PasswordAgeCheck, PasswordLengthCheck
+    from hardcheck.checks.services import LegacyServiceCheck
     from hardcheck.checks.ssh import (
         SshEmptyPasswordsDisabledCheck,
         SshMaxAuthTriesCheck,
         SshPasswordAuthenticationDisabledCheck,
         SshRootLoginDisabledCheck,
     )
+    from hardcheck.checks.sysctl import AslrCheck, DmesgRestrictCheck, IpForwardingCheck
     from hardcheck.checks.users import EmptyPasswordCheck, RootUidCheck
     from hardcheck.checks.world_writable import WorldWritableEtcCheck
 
     implementations = (
-        SshRootLoginDisabledCheck, SshPasswordAuthenticationDisabledCheck,
-        SshMaxAuthTriesCheck, SshEmptyPasswordsDisabledCheck,
-        EmptyPasswordCheck, RootUidCheck, PasswordAgeCheck, PasswordLengthCheck,
-        PasswdPermissionsCheck, ShadowPermissionsCheck, TmpStickyCheck,
+        SshRootLoginDisabledCheck,
+        SshPasswordAuthenticationDisabledCheck,
+        SshMaxAuthTriesCheck,
+        SshEmptyPasswordsDisabledCheck,
+        EmptyPasswordCheck,
+        RootUidCheck,
+        PasswordAgeCheck,
+        PasswordLengthCheck,
+        PasswdPermissionsCheck,
+        ShadowPermissionsCheck,
+        TmpStickyCheck,
         WorldWritableEtcCheck,
+        FirewallCheck,
+        LegacyListenerCheck,
+        IpForwardingCheck,
+        AslrCheck,
+        DmesgRestrictCheck,
+        LegacyServiceCheck,
     )
     for check in implementations:
         if _REGISTERED.get(check.check_id) is not check:
