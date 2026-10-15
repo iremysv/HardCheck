@@ -132,3 +132,39 @@ def test_firewall_evidence_never_echoes_raw_output(monkeypatch):
     result = firewall.FirewallCheck().run()
     assert result.evidence[0].value == EvidenceValue.UFW
     assert "private-secret-token" not in repr(result)
+
+
+def test_explain_output_keeps_exit_status_and_no_raw_data(
+    tmp_path, monkeypatch, capsys
+):
+    from hardcheck import cli
+    from hardcheck.checks.filesystem import ShadowPermissionsCheck
+
+    path = tmp_path / "private-file-name"
+    path.write_text("private-content")
+    path.chmod(0o666)
+    result = ShadowPermissionsCheck(path).run()
+    monkeypatch.setattr(cli, "run_checks", lambda policy: [result])
+    assert cli.main(["scan", "--explain"]) == 1
+    output = capsys.readouterr().out
+    for label in (
+        "Expected:",
+        "Observed:",
+        "Rationale:",
+        "Manual remediation:",
+        "Reference:",
+    ):
+        assert label in output
+    assert "mode_bits=0666" in output
+    assert "private-file-name" not in output
+    assert "private-content" not in output
+    assert cli.main(["scan"]) == 1
+    assert len(capsys.readouterr().out.splitlines()) == 1
+
+
+def test_error_and_skip_never_invent_evidence():
+    check = get_registered_checks()[0]
+    for status in (Status.ERROR, Status.SKIP, Status.WARN):
+        result = check.result(check, status)
+        assert result.evidence[0].value == EvidenceValue.UNKNOWN
+        assert result.remediation

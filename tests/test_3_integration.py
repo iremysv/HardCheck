@@ -73,6 +73,10 @@ def test_all_twelve_checks_pass_on_fake_system(fake_system):
     assert len(results) == 12
     assert len({r.check_id for r in results}) == 12
     assert all(r.status == Status.PASS for r in results)
+    assert all(
+        r.title and r.expected and r.rationale and r.remediation for r in results
+    )
+    assert all(r.evidence for r in results)
     assert [r.check_id for r in results] == sorted(r.check_id for r in results)
 
 

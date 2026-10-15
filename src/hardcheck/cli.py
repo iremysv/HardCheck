@@ -25,6 +25,11 @@ def build_parser() -> argparse.ArgumentParser:
     scan.add_argument("--output")
     scan.add_argument("--lang", choices=("en", "tr"), default="en")
     scan.add_argument("--config")
+    scan.add_argument(
+        "--explain",
+        action="store_true",
+        help="Show safe evidence and manual remediation guidance",
+    )
     scan.add_argument("--min-severity", choices=("low", "medium", "high", "critical"))
     commands.add_parser("list-checks", help="Show available check identifiers")
     return parser
@@ -58,6 +63,21 @@ def main(argv: list[str] | None = None) -> int:
     for result in results:
         detail = f" — {result.detail}" if result.detail else ""
         print(f"{result.check_id}: {result.status.value}{detail}")
+        if arguments.explain:
+            print(f"  Title: {result.title}")
+            print(f"  Expected: {result.expected}")
+            facts = []
+            for fact in result.evidence:
+                value = fact.value
+                if fact.key == "mode_bits" and type(value) is int:
+                    display = f"{value:04o}"
+                else:
+                    display = str(value)
+                facts.append(f"{fact.key.value}={display}")
+            print(f"  Observed: {'; '.join(facts)}")
+            print(f"  Rationale: {result.rationale}")
+            print(f"  Manual remediation: {result.remediation}")
+            print(f"  Reference: {result.reference}")
     if has_errors:
         return 2
     return 1 if any(result.status == Status.FAIL for result in results) else 0

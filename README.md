@@ -4,7 +4,7 @@ Read-only Linux security auditing CLI, implemented in Python 3.11+.
 
 ## Current status
 
-The first four milestones are implemented: eighteen SSH, local account,
+The first five milestones are implemented: eighteen SSH, local account,
 filesystem, network, kernel and legacy-service checks; an isolated scan engine,
 strict YAML policies and bounded read-only queries. Environment markers label
 Linux distribution, init system and possible container scope. Quality checks can be started
@@ -23,11 +23,20 @@ python -m pip install -e '.[dev]'
 python -m hardcheck --version
 python -m hardcheck list-checks
 python -m hardcheck scan
+python -m hardcheck scan --explain
 python -m hardcheck scan --config examples/policy.yaml --min-severity high
 ```
 
 Use an ordinary account. Inaccessible configuration produces an explicit uncertain
 result; do not elevate privileges merely to turn warnings into passes.
+
+## Explain a finding
+
+`scan --explain` adds expected values, safe observations, rationale, primary
+reference and manual remediation guidance. Evidence uses fixed tokens and bounded
+numbers, never account names, password fields, private paths or raw command output.
+Unknown/partial observations are labeled explicitly. Guidance does not change the
+system. See [finding evidence and limitations](docs/findings.md).
 
 ## Checks
 

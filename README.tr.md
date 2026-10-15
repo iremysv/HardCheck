@@ -4,7 +4,7 @@ Python 3.11+ ile geliştirilen, Linux yapılandırmalarını salt okunur inceley
 
 ## Mevcut durum
 
-İlk dört aşama tamamlandı: toplam 18 SSH, yerel hesap, dosya sistemi, ağ, çekirdek
+İlk beş aşama tamamlandı: toplam 18 SSH, yerel hesap, dosya sistemi, ağ, çekirdek
 ve eski servis kontrolü; tarama motoru ve doğrulanan YAML politikaları. Dağıtım,
 servis yöneticisi ve olası konteyner kapsamı sonuçlarda belirtilir. Kalite kontrolleri
 GitHub Actions üzerinden Python 3.11/3.12 için elle başlatılabilir; commitler
@@ -21,6 +21,7 @@ python3 -m venv .venv
 python -m pip install -e '.[dev]'
 python -m hardcheck list-checks
 python -m hardcheck scan
+python -m hardcheck scan --explain
 python -m hardcheck scan --config examples/policy.yaml --min-severity high
 ```
 
@@ -58,6 +59,14 @@ sınırları: [4. gün belgesi](docs/day-04.md).
 bulunduğunu; 2, geçersiz/desteklenmeyen seçenek veya dahili hata olduğunu belirtir.
 WARN/SKIP uygunluk kanıtı değildir. Önem filtresi gösterilen bulgulara ve FAIL
 çıkışına uygulanır; dahili hata filtrelense de çıkış kodu 2 olur.
+
+## Bulguyu açıklama
+
+`scan --explain` beklenen değeri, güvenli gözlemleri, gerekçeyi, kaynağı ve elle
+uygulanacak düzeltme rehberini gösterir. Kanıt alanlarında hesap adı, parola alanı,
+özel dosya yolu veya ham komut çıktısı bulunmaz. Bilinmeyen ve kısmi değerlendirme
+ayrıca belirtilir; hiçbir düzeltme otomatik uygulanmaz.
+Teknik ayrıntılar: [bulgu ve kanıt modeli](docs/findings.md).
 
 ## Doğrulama
 
