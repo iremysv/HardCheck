@@ -5,7 +5,13 @@ import re
 from pathlib import Path
 
 from hardcheck.checks.base import BaseCheck
-from hardcheck.models import CheckResult, Severity, Status
+from hardcheck.models import (
+    CheckResult,
+    Evidence,
+    EvidenceKey,
+    Severity,
+    Status,
+)
 from hardcheck.safe_io import read_regular_text
 
 
@@ -45,7 +51,9 @@ class PasswordAgeCheck(BaseCheck):
             return self.result(Status.WARN, "Password defaults cannot be evaluated")
         status = Status.PASS if 1 <= values[0] <= 90 else Status.FAIL
         return self.result(
-            status, "New-account default only; existing accounts excluded"
+            status,
+            "New-account default only; existing accounts excluded",
+            evidence=(Evidence(EvidenceKey.SETTING, values[0]),),
         )
 
 
@@ -84,7 +92,12 @@ class PasswordLengthCheck(BaseCheck):
             files.append(self.path)
             settings: dict[str, int] = {}
             relevant = {
-                "minlen", "dcredit", "ucredit", "lcredit", "ocredit", "enforcing"
+                "minlen",
+                "dcredit",
+                "ucredit",
+                "lcredit",
+                "ocredit",
+                "enforcing",
             }
             total = 0
             for path in files:
@@ -108,9 +121,10 @@ class PasswordLengthCheck(BaseCheck):
                 return self.result(Status.WARN, "No explicit minlen policy")
             # libpwquality defaults all credits to zero; positive credits can
             # reduce actual length. Use a conservative lower bound.
-            credits = sum(max(0, settings.get(key, 0)) for key in (
-                "dcredit", "ucredit", "lcredit", "ocredit"
-            ))
+            credits = sum(
+                max(0, settings.get(key, 0))
+                for key in ("dcredit", "ucredit", "lcredit", "ocredit")
+            )
             secure = settings["minlen"] - credits >= 12
             secure = secure and settings.get("enforcing", 1) != 0
         except FileNotFoundError:
@@ -122,4 +136,9 @@ class PasswordLengthCheck(BaseCheck):
         return self.result(
             Status.PASS if secure else Status.FAIL,
             "Static libpwquality policy; PAM activation and overrides not assessed",
+            evidence=(
+                Evidence(EvidenceKey.SETTING, settings["minlen"]),
+                Evidence(EvidenceKey.CREDIT, credits),
+                Evidence(EvidenceKey.ENFORCING, settings.get("enforcing", 1)),
+            ),
         )

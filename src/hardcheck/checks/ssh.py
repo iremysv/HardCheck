@@ -9,7 +9,14 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from hardcheck.checks.base import BaseCheck
-from hardcheck.models import CheckResult, Severity, Status
+from hardcheck.models import (
+    CheckResult,
+    Evidence,
+    EvidenceKey,
+    EvidenceValue,
+    Severity,
+    Status,
+)
 from hardcheck.registry import register_check
 from hardcheck.safe_io import read_regular_text
 
@@ -94,8 +101,10 @@ def inspect_ssh_config(
                         for name in sorted(matches):
                             visit(Path(name), depth + 1)
                 elif directive in {
-                    "permitrootlogin", "passwordauthentication",
-                    "maxauthtries", "permitemptypasswords",
+                    "permitrootlogin",
+                    "passwordauthentication",
+                    "maxauthtries",
+                    "permitemptypasswords",
                 }:
                     if len(values) != 1:
                         raise ValueError("Invalid SSH directive arguments")
@@ -149,8 +158,15 @@ class SshSettingCheck(BaseCheck):
         value = config.settings.get(self.setting.lower())
         if value is None:
             return self.result(Status.WARN, "Directive is not explicitly configured")
-        return self.result(Status.PASS if self.is_secure(value) else Status.FAIL)
-
+        observed: EvidenceValue | int = EvidenceValue.INVALID
+        if value in {"yes", "no"}:
+            observed = EvidenceValue(value)
+        elif self.setting == "MaxAuthTries" and re.fullmatch(r"[0-9]{1,10}", value):
+            observed = int(value)
+        return self.result(
+            Status.PASS if self.is_secure(value) else Status.FAIL,
+            evidence=(Evidence(EvidenceKey.SETTING, observed),),
+        )
 
 
 @register_check
