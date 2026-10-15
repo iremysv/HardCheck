@@ -4,7 +4,11 @@ import re
 from pathlib import Path
 
 from hardcheck.checks.base import BaseCheck
-from hardcheck.models import CheckResult, Severity, Status
+from hardcheck.models import (
+    CheckResult,
+    Severity,
+    Status,
+)
 from hardcheck.safe_io import read_regular_text
 
 
@@ -18,6 +22,7 @@ class LegacyListenerCheck(BaseCheck):
         self.root = root
 
     def run(self) -> CheckResult:
+        counts = {21: 0, 23: 0}
         failed = False
         unavailable = False
         malformed = False
@@ -41,6 +46,7 @@ class LegacyListenerCheck(BaseCheck):
                         port = int(fields[1].split(":")[1], 16)
                         if port in {21, 23}:
                             failed = True
+                            counts[port] += 1
             except (OSError, UnicodeError):
                 unavailable = True
             except ValueError:

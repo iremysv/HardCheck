@@ -4,7 +4,14 @@ import re
 
 from hardcheck.checks.base import BaseCheck
 from hardcheck.commands import run_query
-from hardcheck.models import CheckResult, Severity, Status
+from hardcheck.models import (
+    CheckResult,
+    Evidence,
+    EvidenceKey,
+    EvidenceValue,
+    Severity,
+    Status,
+)
 
 LEGACY_PACKAGES = {
     "telnet",
@@ -80,7 +87,15 @@ class LegacyServiceCheck(BaseCheck):
                         if not re.fullmatch(r"[A-Za-z0-9.+_-]+", name):
                             raise ValueError
                         if name in LEGACY_PACKAGES and installed:
-                            return self.result(Status.FAIL, "Legacy package detected")
+                            return self.result(
+                                Status.FAIL,
+                                "Legacy package detected",
+                                evidence=(
+                                    Evidence(
+                                        EvidenceKey.PACKAGE, EvidenceValue.PRESENT
+                                    ),
+                                ),
+                            )
                     package_observed = True
                 else:
                     for line in lines:
@@ -89,7 +104,13 @@ class LegacyServiceCheck(BaseCheck):
                             raise ValueError
                         name = fields[0].rsplit(".", 1)[0].split("@", 1)[0]
                         if name in LEGACY_UNITS:
-                            return self.result(Status.FAIL, "Legacy unit detected")
+                            return self.result(
+                                Status.FAIL,
+                                "Legacy unit detected",
+                                evidence=(
+                                    Evidence(EvidenceKey.UNIT, EvidenceValue.PRESENT),
+                                ),
+                            )
                     units_observed += 1
             except ValueError:
                 uncertain = True
@@ -101,4 +122,20 @@ class LegacyServiceCheck(BaseCheck):
             status,
             "Known package/unit names only; custom binaries and inetd definitions "
             "not assessed; current environment only",
+            evidence=(
+                Evidence(
+                    EvidenceKey.PACKAGE,
+                    EvidenceValue.ABSENT if package_observed else EvidenceValue.UNKNOWN,
+                ),
+                Evidence(
+                    EvidenceKey.UNIT,
+                    EvidenceValue.ABSENT
+                    if units_observed == 2
+                    else EvidenceValue.UNKNOWN,
+                ),
+                Evidence(
+                    EvidenceKey.COVERAGE,
+                    EvidenceValue.COMPLETE if complete else EvidenceValue.PARTIAL,
+                ),
+            ),
         )

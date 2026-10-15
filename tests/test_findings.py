@@ -101,3 +101,34 @@ def test_filesystem_evidence_is_numeric_without_private_paths(tmp_path):
     assert {e.key: e.value for e in result.evidence}[EvidenceKey.MATCHES] == 1
     assert "secret-private-filename" not in repr(result)
     assert "private-content" not in repr(result)
+
+
+def test_kernel_evidence_does_not_echo_malformed_values(tmp_path):
+    from hardcheck.checks.sysctl import AslrCheck
+
+    path = tmp_path / "kernel/randomize_va_space"
+    path.parent.mkdir()
+    path.write_text("private-secret-token")
+    result = AslrCheck(tmp_path).run()
+    assert result.evidence == (Evidence(EvidenceKey.SETTING, EvidenceValue.INVALID),)
+    assert "private-secret-token" not in repr(result)
+    path.write_text("2")
+    assert AslrCheck(tmp_path).run().evidence[0].value == 2
+
+
+def test_firewall_evidence_never_echoes_raw_output(monkeypatch):
+    from hardcheck.checks import firewall
+    from hardcheck.commands import CommandResult
+
+    monkeypatch.setattr(
+        firewall,
+        "run_query",
+        lambda query: (
+            CommandResult("done", "Status: active\nprivate-secret-token", 0)
+            if query == "ufw"
+            else CommandResult("missing")
+        ),
+    )
+    result = firewall.FirewallCheck().run()
+    assert result.evidence[0].value == EvidenceValue.UFW
+    assert "private-secret-token" not in repr(result)

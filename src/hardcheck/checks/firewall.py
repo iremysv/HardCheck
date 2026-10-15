@@ -4,7 +4,14 @@ import json
 
 from hardcheck.checks.base import BaseCheck
 from hardcheck.commands import run_query
-from hardcheck.models import CheckResult, Severity, Status
+from hardcheck.models import (
+    CheckResult,
+    Evidence,
+    EvidenceKey,
+    EvidenceValue,
+    Severity,
+    Status,
+)
 
 
 class FirewallCheck(BaseCheck):
@@ -61,8 +68,20 @@ class FirewallCheck(BaseCheck):
                         Status.PASS,
                         "Input filtering evidence; rule effectiveness and all families "
                         "not proven; current namespace only",
+                        evidence=(Evidence(EvidenceKey.BACKEND, EvidenceValue(query)),),
                     )
             except (ValueError, KeyError, TypeError, AttributeError):
                 uncertain = True
         status = Status.WARN if uncertain else Status.FAIL if observed else Status.SKIP
-        return self.result(status, "No verified active supported firewall evidence")
+        return self.result(
+            status,
+            "No verified active supported firewall evidence",
+            evidence=(
+                Evidence(
+                    EvidenceKey.COVERAGE,
+                    EvidenceValue.PARTIAL
+                    if uncertain or not observed
+                    else EvidenceValue.COMPLETE,
+                ),
+            ),
+        )

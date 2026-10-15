@@ -3,7 +3,14 @@
 from pathlib import Path
 
 from hardcheck.checks.base import BaseCheck
-from hardcheck.models import CheckResult, Severity, Status
+from hardcheck.models import (
+    CheckResult,
+    Evidence,
+    EvidenceKey,
+    EvidenceValue,
+    Severity,
+    Status,
+)
 from hardcheck.safe_io import read_regular_text
 
 
@@ -21,21 +28,37 @@ class SysctlCheck(BaseCheck):
         unavailable = False
         malformed = False
         failed = False
+        facts = []
         for source in self.sources:
+            key = EvidenceKey.SETTING
+            if self.check_id == "NET-003":
+                key = EvidenceKey.IPV4 if "ipv4" in source else EvidenceKey.IPV6
+            observed: EvidenceValue | int = EvidenceValue.UNKNOWN
             try:
                 value = read_regular_text(self.root / source, 64).strip()
                 if value not in {"0", "1", "2"}:
                     malformed = True
-                elif value != self.expected:
-                    failed = True
+                    observed = EvidenceValue.INVALID
+                else:
+                    observed = int(value)
+                    if value != self.expected:
+                        failed = True
             except (OSError, UnicodeError, ValueError):
                 unavailable = True
+            facts.append(Evidence(key, observed))
         status = (
-            Status.FAIL if failed else Status.WARN if malformed
-            else Status.SKIP if unavailable else Status.PASS
+            Status.FAIL
+            if failed
+            else Status.WARN
+            if malformed
+            else Status.SKIP
+            if unavailable
+            else Status.PASS
         )
         return self.result(
-            status, "Live namespace values; persistence and host scope unverified"
+            status,
+            "Live namespace values; persistence and host scope unverified",
+            evidence=tuple(facts),
         )
 
 
