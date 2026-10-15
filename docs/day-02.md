@@ -20,7 +20,10 @@ Policy severity overrides are user choices, not a certification of compliance.
 The static parser evaluates the four supported explicit directives, with the
 first global value taking precedence. Global Includes expand in lexical order;
 relative paths use `/etc/ssh`, not the including file's directory. Unmatched
-patterns are ignored. Quoted arguments and comments are parsed without a shell.
+patterns are ignored. Double-quoted arguments and comments are parsed without shell escape expansion.
+Wildcards in directory components and recursive globbing yield WARN; only the
+final filename component supports patterns. Directory scans are capped at 4096
+entries, and permission failures produce WARN rather than an empty match list.
 
 Match blocks require a connection context and cause WARN for all SSH checks;
 there is no claim to calculate effective per-user/per-address configuration.
@@ -41,6 +44,7 @@ Connection-specific sshd execution is not implemented. Environment detection and
 remaining check families are scheduled for subsequent milestones.
 
 The existing minimum-severity flag now filters results by the effective policy
-severity. Internal check errors return CLI exit code 2, failing checks return 1,
+severity. Internal check errors return CLI exit code 2 even when filtered out; failing
+displayed checks return 1,
 and other outcomes return 0. WARN/SKIP do not certify compliance.
 
