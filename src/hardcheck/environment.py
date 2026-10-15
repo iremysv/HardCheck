@@ -16,7 +16,9 @@ class Environment:
     container: bool | None = None
 
 
-def detect_environment(root: Path = Path("/"), system: str | None = None) -> Environment:
+def detect_environment(
+    root: Path = Path("/"), system: str | None = None
+) -> Environment:
     """Read bounded local markers without sourcing os-release or running commands."""
     system = platform.system() if system is None else system
     if system != "Linux":
