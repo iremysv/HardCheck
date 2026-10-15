@@ -73,5 +73,7 @@ class RootUidCheck(AccountCheck):
             return Status.WARN
         if any(not re.fullmatch(r"[0-9]{1,10}", row[3]) for row in rows):
             return Status.WARN
+        if any(int(row[index]) > 4294967294 for row in rows for index in (2, 3)):
+            return Status.WARN
         privileged = [row[0] for row in rows if int(row[2]) == 0]
         return Status.PASS if privileged == ["root"] else Status.FAIL

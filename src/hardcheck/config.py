@@ -74,8 +74,6 @@ def load_policy(path: Path) -> Policy:
     checks = document["checks"]
     if not isinstance(checks, dict):
         raise ConfigError("checks must be a mapping")
-    from hardcheck.checks import ssh as _ssh  # noqa: F401
-
     known = {check.check_id for check in get_registered_checks()}
     rules = {}
     for identifier, options in checks.items():

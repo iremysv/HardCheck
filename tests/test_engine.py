@@ -1,5 +1,7 @@
 """Tests for the scan engine."""
 
+import pytest
+
 from hardcheck.checks import ssh
 from hardcheck.engine import run_checks
 from hardcheck.models import Status
@@ -45,3 +47,13 @@ def test_constructor_error_is_isolated(monkeypatch):
     assert len(results) == 4
     assert all(result.status == Status.ERROR for result in results)
     assert all("private" not in result.detail for result in results)
+
+
+@pytest.fixture(autouse=True)
+def isolate_ssh_engine_tests(monkeypatch):
+    """Keep these engine/policy tests away from all host account/filesystem data."""
+    import hardcheck.engine as engine
+    from hardcheck.registry import get_registered_checks
+
+    checks = tuple(c for c in get_registered_checks() if c.check_id.startswith("SSH-"))
+    monkeypatch.setattr(engine, "get_registered_checks", lambda: checks)

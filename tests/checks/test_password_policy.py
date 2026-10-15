@@ -28,6 +28,7 @@ def test_age_policy(tmp_path, text, status):
     ("minlen = 13\ndcredit = 1", Status.PASS),
     ("minlen = 12\ndcredit = -1", Status.PASS),
     ("minlen = 20\nenforcing = 0", Status.FAIL),
+    ("minlen = 12\nminlen 4", Status.WARN),
     ("minlen = 1_2", Status.WARN), ("minlen 12", Status.WARN),
     ("# missing", Status.WARN), ("minlen = 20\nminlen = 8", Status.FAIL),
 ])

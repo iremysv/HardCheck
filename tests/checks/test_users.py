@@ -28,6 +28,7 @@ def test_empty_password_fields(tmp_path, password, expected):
     ("root:x:0:bad::/:/bin/sh\n", Status.WARN),
     ("root:x:0:0::/:/bin/sh\nroot:x:0:0::/:/bin/sh\n", Status.WARN),
     ("+nis:x:0:0::/:/bin/sh\n", Status.WARN),
+    ("root:x:0:9999999999::/:/bin/sh\n", Status.WARN),
     ("malformed", Status.WARN), ("", Status.WARN),
 ])
 def test_root_uid(tmp_path, content, expected):

@@ -98,6 +98,8 @@ class PasswordLengthCheck(BaseCheck):
                         continue
                     key, separator, value = line.partition("=")
                     key = key.strip()
+                    if key and key.split()[0] in relevant and key not in relevant:
+                        raise ValueError("Invalid policy key syntax")
                     if key in relevant:
                         if not separator:
                             raise ValueError("Invalid policy assignment")

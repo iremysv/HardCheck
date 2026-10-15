@@ -2,7 +2,6 @@
 
 from dataclasses import replace
 
-from hardcheck.checks import ssh as ssh_checks  # noqa: F401
 from hardcheck.checks.base import BaseCheck
 from hardcheck.config import Policy, Rule
 from hardcheck.models import CheckResult, Status
