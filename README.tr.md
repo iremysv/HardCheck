@@ -4,14 +4,15 @@ Python 3.11+ ile geliştirilen, Linux yapılandırmalarını salt okunur inceley
 
 ## Mevcut durum
 
-İlk beş aşama tamamlandı: toplam 18 SSH, yerel hesap, dosya sistemi, ağ, çekirdek
+İlk altı aşama tamamlandı: toplam 18 SSH, yerel hesap, dosya sistemi, ağ, çekirdek
 ve eski servis kontrolü; tarama motoru ve doğrulanan YAML politikaları. Dağıtım,
 servis yöneticisi ve olası konteyner kapsamı sonuçlarda belirtilir. Kalite kontrolleri
 GitHub Actions üzerinden Python 3.11/3.12 için elle başlatılabilir; commitler
 otomatik çalıştırma tetiklemez.
 
-JSON/HTML raporları, Türkçe uygulama çıktıları, puanlama
-sonraki aşamalardadır. Henüz uygulanmayan seçenekler hata kodu 2 döndürür.
+Terminal özeti, JSON raporları ve şeffaf puanlama kullanılabilir.
+HTML raporları ve Türkçe uygulama çıktıları sonraki aşamalardadır.
+Henüz uygulanmayan seçenekler hata kodu 2 döndürür.
 
 ## Kurulum ve kullanım
 
@@ -79,3 +80,11 @@ Testler geçici dosyalar kullanır; sistem ayarlarını değiştirmez. Sanal ort
 anahtarları, kimlik bilgilerini ve yerel tarama verilerini repoya eklemeyin.
 Proje geliştirme aşamasındadır; mevcut kontroller tam sistem güvenlik denetimi
 yerine geçmez. Lisans: MIT.
+
+## 6. aşama: raporlama ve puanlama
+
+Terminal özeti, JSON raporu ve `--output` ile özel izinli yeni dosyaya kayıt
+kullanılabilir. Puan yalnızca PASS ve FAIL üzerinden hesaplanır; WARN, SKIP
+ve ERROR başarı sayılmaz. Kesin değerlendirilen kontrol oranı ayrıca gösterilir.
+Filtre dışında kalan ERROR da çıkış kodu 2 üretir. HTML ve Türkçe çıktı
+henüz desteklenmez. Ayrıntılar: [Reporting](docs/reporting.md).
