@@ -66,3 +66,35 @@ def test_invalid_input_is_stderr_only(capsys):
     captured = capsys.readouterr()
     assert captured.err
     assert not captured.out
+
+
+@pytest.mark.parametrize("format", ["terminal", "json"])
+def test_output_is_private_and_never_overwrites(format, tmp_path, monkeypatch, capsys):
+    import os
+    import stat
+
+    monkeypatch.setattr(cli, "run_checks", lambda _: [fake_result(Status.FAIL)])
+    path = tmp_path / "report"
+    args = ["scan", "--format", format, "--output", str(path)]
+    assert cli.main(args) == 1
+    assert capsys.readouterr().out == ""
+    original = path.read_text()
+    if format == "json":
+        assert json.loads(original)["summary"]["counts"]["FAIL"] == 1
+    if os.name == "posix":
+        assert stat.S_IMODE(path.stat().st_mode) == 0o600
+    assert cli.main(args) == 2
+    assert path.read_text() == original
+    assert capsys.readouterr().err
+
+
+def test_output_does_not_follow_symlinks(tmp_path, monkeypatch, capsys):
+    monkeypatch.setattr(cli, "run_checks", lambda _: [])
+    target = tmp_path / "target"
+    target.write_text("keep")
+    link = tmp_path / "link"
+    link.symlink_to(target)
+    assert cli.main(["scan", "--output", str(link)]) == 2
+    assert target.read_text() == "keep"
+    assert cli.main(["scan", "--output", str(tmp_path / "missing" / "report")]) == 2
+    assert capsys.readouterr().err

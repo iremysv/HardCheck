@@ -1,7 +1,10 @@
 """Command-line interface for HardCheck."""
 
 import argparse
+import os
 import sys
+from contextlib import redirect_stdout
+from io import StringIO
 from pathlib import Path
 
 from hardcheck import __version__
@@ -44,12 +47,11 @@ def main(argv: list[str] | None = None) -> int:
         for check_class in get_registered_checks():
             print(check_class.check_id)
         return 0
-    if (
-        arguments.format == "html"
-        or arguments.output is not None
-        or arguments.lang != "en"
-    ):
+    if arguments.format == "html" or arguments.lang != "en":
         print("This option is not available in the initial release.", file=sys.stderr)
+        return 2
+    if arguments.output == "":
+        print("Output path must not be empty.", file=sys.stderr)
         return 2
     try:
         policy = load_policy(Path(arguments.config)) if arguments.config else None
@@ -64,12 +66,33 @@ def main(argv: list[str] | None = None) -> int:
         minimum = priorities.index(Severity(arguments.min_severity))
         results = [r for r in results if priorities.index(r.severity) >= minimum]
     if arguments.format == "json":
-        print(json_report(results, all_results, arguments.min_severity), end="")
-        return 2 if has_errors else exit_code(results)
+        report = json_report(results, all_results, arguments.min_severity)
+    else:
+        buffer = StringIO()
+        with redirect_stdout(buffer):
+            print_terminal(results, all_results, arguments.explain)
+        report = buffer.getvalue()
+    try:
+        if arguments.output is None:
+            print(report, end="")
+        else:
+            descriptor = os.open(
+                arguments.output, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600
+            )
+            with os.fdopen(descriptor, "w", encoding="utf-8") as stream:
+                stream.write(report)
+    except OSError:
+        print("Could not write report; choose a new writable path.", file=sys.stderr)
+        return 2
+    return 2 if has_errors else exit_code(results)
+
+
+def print_terminal(results, all_results, explain: bool) -> None:
+    """Print findings and the displayed assessment scope."""
     for result in results:
         detail = f" — {result.detail}" if result.detail else ""
         print(f"{result.check_id}: {result.status.value}{detail}")
-        if arguments.explain:
+        if explain:
             print(f"  Title: {result.title}")
             print(f"  Expected: {result.expected}")
             facts = []
@@ -90,4 +113,3 @@ def main(argv: list[str] | None = None) -> int:
             f"Hidden controls: {len(all_results) - len(results)}; "
             f"scan ERROR={sum(r.status == Status.ERROR for r in all_results)}"
         )
-    return 2 if has_errors else exit_code(results)
