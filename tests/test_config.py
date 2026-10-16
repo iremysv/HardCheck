@@ -95,7 +95,7 @@ def test_cli_applies_policy_and_reports_engine_errors(tmp_path, monkeypatch, cap
     assert seen[0].rules["SSH-001"].severity == Severity.CRITICAL
     assert "SSH-001: ERROR" in capsys.readouterr().out
     assert main(["scan", "--min-severity", "critical"]) == 2
-    assert not capsys.readouterr().out
+    assert "scan ERROR=1" in capsys.readouterr().out
 
 
 def test_disabled_check_does_not_construct_and_keeps_severity(tmp_path, monkeypatch):
@@ -117,7 +117,7 @@ def test_disabled_check_does_not_construct_and_keeps_severity(tmp_path, monkeypa
 
 
 @pytest.mark.parametrize("args", [
-    ["--lang", "tr"], ["--format", "json"], ["--format", "html"],
+    ["--lang", "tr"], ["--format", "html"],
     ["--output", ""],
 ])
 def test_unimplemented_options_do_not_silently_succeed(args, monkeypatch, capsys):

@@ -159,7 +159,7 @@ def test_explain_output_keeps_exit_status_and_no_raw_data(
     assert "private-file-name" not in output
     assert "private-content" not in output
     assert cli.main(["scan"]) == 1
-    assert len(capsys.readouterr().out.splitlines()) == 1
+    assert len(capsys.readouterr().out.splitlines()) == 3
 
 
 def test_error_and_skip_never_invent_evidence():

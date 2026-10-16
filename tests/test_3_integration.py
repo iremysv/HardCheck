@@ -94,7 +94,7 @@ def test_yaml_controls_new_check_families(fake_system):
 def test_cli_full_scan_uses_all_twelve_checks(fake_system, capsys):
     assert main(["scan"]) == 0
     output = capsys.readouterr().out
-    assert len(output.splitlines()) == 12
+    assert len(output.splitlines()) == 14
     assert "USR-004: PASS" in output
     assert "FS-004: PASS" in output
     (fake_system / "shadow").write_text("root::20000:0:90:7:::\n")

@@ -9,6 +9,8 @@ from hardcheck.config import ConfigError, load_policy
 from hardcheck.engine import run_checks
 from hardcheck.models import Severity, Status
 from hardcheck.registry import get_registered_checks
+from hardcheck.reporting import json_report, terminal_summary
+from hardcheck.scoring import exit_code
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -43,7 +45,7 @@ def main(argv: list[str] | None = None) -> int:
             print(check_class.check_id)
         return 0
     if (
-        arguments.format != "terminal"
+        arguments.format == "html"
         or arguments.output is not None
         or arguments.lang != "en"
     ):
@@ -55,11 +57,15 @@ def main(argv: list[str] | None = None) -> int:
         print(f"Invalid configuration: {exc}", file=sys.stderr)
         return 2
     results = run_checks(policy)
+    all_results = results
     has_errors = any(result.status == Status.ERROR for result in results)
     if arguments.min_severity:
         priorities = list(Severity)
         minimum = priorities.index(Severity(arguments.min_severity))
         results = [r for r in results if priorities.index(r.severity) >= minimum]
+    if arguments.format == "json":
+        print(json_report(results, all_results, arguments.min_severity), end="")
+        return 2 if has_errors else exit_code(results)
     for result in results:
         detail = f" — {result.detail}" if result.detail else ""
         print(f"{result.check_id}: {result.status.value}{detail}")
@@ -78,6 +84,10 @@ def main(argv: list[str] | None = None) -> int:
             print(f"  Rationale: {result.rationale}")
             print(f"  Manual remediation: {result.remediation}")
             print(f"  Reference: {result.reference}")
-    if has_errors:
-        return 2
-    return 1 if any(result.status == Status.FAIL for result in results) else 0
+    print(terminal_summary(results))
+    if len(results) != len(all_results):
+        print(
+            f"Hidden controls: {len(all_results) - len(results)}; "
+            f"scan ERROR={sum(r.status == Status.ERROR for r in all_results)}"
+        )
+    return 2 if has_errors else exit_code(results)
