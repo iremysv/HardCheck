@@ -1,4 +1,4 @@
-# Day 2: secure configuration foundation
+# Step 2: secure configuration foundation
 
 HardCheck performs read-only, bounded regular-file reads. It does not invoke a
 shell, execute YAML commands, change system settings, or request elevated access.

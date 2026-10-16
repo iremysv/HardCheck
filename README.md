@@ -64,8 +64,8 @@ system. See [finding evidence and limitations](docs/findings.md).
 
 A static PASS does not prove the running daemon uses the inspected configuration.
 Match blocks and unsupported or unreadable configuration produce WARN. See
-[configuration and limits](docs/day-02.md) before interpreting results. See [day 3 scope](docs/day-03.md) for account,
-password-policy and filesystem limits. See [day 4 scope](docs/day-04.md) for
+[configuration and limits](docs/step-02.md) before interpreting results. See [step 3 scope](docs/step-03.md) for account,
+password-policy and filesystem limits. See [step 4 scope](docs/step-04.md) for
 network/namespace limits, query safety and unsupported service environments.
 
 Exit codes: 0 means no displayed FAIL and no internal ERROR; 1 means a displayed

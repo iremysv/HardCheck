@@ -1,4 +1,4 @@
-# Day 4: live network, kernel and service checks
+# Step 4: live network, kernel and service checks
 
 Eighteen fixed built-in checks are registered. No configuration or policy file
 can introduce executable checks or arbitrary command arguments. This milestone

@@ -28,7 +28,7 @@ These are planned features, not implemented capabilities of this commit.
 
 ## Known limits
 
-See day-02.md. Static SSH analysis does not validate the whole daemon grammar,
+See step-02.md. Static SSH analysis does not validate the whole daemon grammar,
 inspect daemon startup flags or resolve per-connection Match conditions. WARN and
 SKIP must remain visible limitations, not be interpreted as secure configuration.
 Coverage numbers measure exercised lines, not absence of vulnerabilities.

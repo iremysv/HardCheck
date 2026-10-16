@@ -1,4 +1,4 @@
-# Day 3: local account and filesystem checks
+# Step 3: local account and filesystem checks
 
 Eight implementations join the four SSH checks, for twelve registered controls.
 Implementations were delivered in related, tested commits: local account records,
@@ -51,7 +51,7 @@ and resource limits make coverage incomplete. Known world-writable files produce
 FAIL even when coverage is incomplete; otherwise incomplete coverage yields WARN.
 Limits: 20,000 entries and depth 64. Findings contain counts, not private names.
 Directory replacements are checked by device/inode; scans are not atomic snapshots.
-Platform/environment detection is scheduled for day 4; this release targets Linux.
+Platform/environment detection is scheduled for step 4; this release targets Linux.
 
 ## Validation
 

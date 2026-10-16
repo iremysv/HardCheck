@@ -52,9 +52,9 @@ ayarlar güvenli sayılmaz. WARN sonucunu kaldırmak amacıyla yetki yükseltmey
 
 PASS, çalışan SSH servisinin bu dosyayı kullandığını kanıtlamaz. Match blokları,
 desteklenmeyen veya okunamayan yapılandırmalar WARN üretir. Teknik sınırlar ve
-YAML şeması: [2. gün belgesi](docs/day-02.md). Hesap ve dosya sistemi
-sınırları: [3. gün belgesi](docs/day-03.md). Ağ, servis ve ortam
-sınırları: [4. gün belgesi](docs/day-04.md).
+YAML şeması: [2. adım belgesi](docs/step-02.md). Hesap ve dosya sistemi
+sınırları: [3. adım belgesi](docs/step-03.md). Ağ, servis ve ortam
+sınırları: [4. adım belgesi](docs/step-04.md).
 
 Çıkış kodları: 0, gösterilen FAIL ve dahili ERROR bulunmadığını; 1, gösterilen FAIL
 bulunduğunu; 2, geçersiz/desteklenmeyen seçenek veya dahili hata olduğunu belirtir.

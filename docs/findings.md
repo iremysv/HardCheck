@@ -1,6 +1,6 @@
 # Finding explanations and safe evidence
 
-Day 5 adds consistent expected values, rationale and manual remediation guidance
+Step 5 adds consistent expected values, rationale and manual remediation guidance
 for all eighteen registered checks. Run `python -m hardcheck scan --explain` to
 show these fields, numeric/token observations and a reference for each finding.
 The compact default output and existing exit-code semantics remain available.
@@ -44,7 +44,7 @@ zeroization or a promise that process memory contains no secrets.
   alongside coverage. Partial inventory observations do not prove universal absence.
 
 A `complete_within_scope` token refers only to the documented inputs. It is not a
-host-wide security certification. Scope limits from day-02/03/04 documents still
+host-wide security certification. Scope limits from step-02/03/04 documents still
 apply. Environment/namespace context stays attached to results.
 
 ## Manual remediation
