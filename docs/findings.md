@@ -4,7 +4,8 @@ Step 5 adds consistent expected values, rationale and manual remediation guidanc
 for all eighteen registered checks. Run `python -m hardcheck scan --explain` to
 show these fields, numeric/token observations and a reference for each finding.
 The compact default output and existing exit-code semantics remain available.
-Scoring, JSON/HTML output and translation are separate later milestones.
+Scoring, JSON/HTML output and English/Turkish presentation are now available;
+see [reporting](reporting.md) and [step 7](step-07.md).
 
 ## Data model
 
@@ -36,8 +37,9 @@ zeroization or a promise that process memory contains no secrets.
   count and traversal coverage. Counts do not reveal private file names. Extended
   ACLs, group membership and parent path trust are still outside this assessment.
 - Sysctl: numeric current-namespace observations, or unknown/invalid tokens.
-- Listeners: counts of TCP port 21/23 listeners plus observation coverage. Zero
-  counts with partial coverage do not prove absence; addresses are excluded.
+- Listeners: the current probe returns a status and a fixed namespace/port
+  limitation; its structured evidence remains `assessment=unknown`. Listener
+  counts are not currently emitted. Addresses are excluded.
 - Firewall: recognized backend token when active filtering evidence exists;
   otherwise scope-limited coverage. Backend evidence does not certify rule quality.
 - Services: known-package/unit presence or absence within successful inventories,

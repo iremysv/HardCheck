@@ -4,15 +4,15 @@ Python 3.11+ ile geliştirilen, Linux yapılandırmalarını salt okunur inceley
 
 ## Mevcut durum
 
-İlk altı aşama tamamlandı: toplam 18 SSH, yerel hesap, dosya sistemi, ağ, çekirdek
+İlk yedi aşama tamamlandı: toplam 18 SSH, yerel hesap, dosya sistemi, ağ, çekirdek
 ve eski servis kontrolü; tarama motoru ve doğrulanan YAML politikaları. Dağıtım,
 servis yöneticisi ve olası konteyner kapsamı sonuçlarda belirtilir. Kalite kontrolleri
 GitHub Actions üzerinden Python 3.11/3.12 için elle başlatılabilir; commitler
 otomatik çalıştırma tetiklemez.
 
-Terminal özeti, JSON raporları ve şeffaf puanlama kullanılabilir.
-HTML raporları ve Türkçe uygulama çıktıları sonraki aşamalardadır.
-Henüz uygulanmayan seçenekler hata kodu 2 döndürür.
+Terminal özeti, JSON ve çevrimdışı HTML raporları ile şeffaf puanlama
+kullanılabilir. Rapor dili `--lang en|tr` ile seçilir; inceleme salt okunurdur.
+Ayrıntılar: [7. adım: HTML ve diller](docs/step-07.md).
 
 ## Kurulum ve kullanım
 
@@ -22,7 +22,10 @@ python3 -m venv .venv
 python -m pip install -e '.[dev]'
 python -m hardcheck list-checks
 python -m hardcheck scan
-python -m hardcheck scan --explain
+python -m hardcheck scan --lang tr --explain
+python -m hardcheck scan --format json --lang tr
+mkdir -p scan-output
+python -m hardcheck scan --format html --lang tr --output scan-output/report-tr.html
 python -m hardcheck scan --config examples/policy.yaml --min-severity high
 ```
 
@@ -81,10 +84,11 @@ anahtarları, kimlik bilgilerini ve yerel tarama verilerini repoya eklemeyin.
 Proje geliştirme aşamasındadır; mevcut kontroller tam sistem güvenlik denetimi
 yerine geçmez. Lisans: MIT.
 
-## 6. aşama: raporlama ve puanlama
+## Raporlama ve puanlama
 
 Terminal özeti, JSON raporu ve `--output` ile özel izinli yeni dosyaya kayıt
 kullanılabilir. Puan yalnızca PASS ve FAIL üzerinden hesaplanır; WARN, SKIP
 ve ERROR başarı sayılmaz. Kesin değerlendirilen kontrol oranı ayrıca gösterilir.
-Filtre dışında kalan ERROR da çıkış kodu 2 üretir. HTML ve Türkçe çıktı
-henüz desteklenmez. Ayrıntılar: [Reporting](docs/reporting.md).
+Filtre dışında kalan ERROR da çıkış kodu 2 üretir. HTML ve JSON raporları
+açıklamaları her zaman içerir; `--explain` terminal çıktısını genişletir.
+Ayrıntılar: [raporlama sözleşmesi](docs/reporting.md).

@@ -1,7 +1,8 @@
 # Reporting, scoring and exit codes
 
-The sixth milestone adds terminal summaries, versioned JSON and optional report
-files. HTML and translated output remain unavailable and return exit code 2.
+Terminal summaries, versioned JSON and self-contained HTML share the same score
+and scope rules. Select English or Turkish with `--lang en|tr`. See
+[step 7](step-07.md) for HTML security and localization limits.
 
 ```sh
 hardcheck scan
@@ -9,6 +10,8 @@ hardcheck scan --explain
 hardcheck scan --format json
 hardcheck scan --format json --output scan-output/report.json
 hardcheck scan --min-severity high
+hardcheck scan --lang tr --explain
+hardcheck scan --format html --lang tr --output scan-output/report-tr.html
 ```
 
 Create the output directory yourself. Output files are created exclusively with
@@ -37,15 +40,15 @@ Disabled controls remain SKIP and lower coverage.
 
 `--min-severity` selects displayed controls after policy severity overrides.
 The score and coverage use that displayed set. JSON also includes `scan_summary`
-for all collected controls, plus the number of hidden controls. Terminal output
-shows the hidden count and full-scan ERROR count when filtering hides controls.
+for all collected controls, plus the number of hidden controls. Terminal and HTML output
+show the hidden count and full-scan ERROR count when filtering hides controls.
 The host namespace is always labeled unverified.
 
 | Code | Meaning |
 | --- | --- |
 | 0 | No displayed FAIL and no collected ERROR; uncertainty may remain |
 | 1 | At least one displayed FAIL and no collected ERROR |
-| 2 | Any collected ERROR, invalid/unsupported input, or report write failure |
+| 2 | Any collected ERROR, invalid/unsupported input, or report rendering/write failure |
 
 A hidden FAIL does not change exit 0; a hidden ERROR always produces exit 2.
 WARN, SKIP and an empty selection must not be interpreted as compliance.
@@ -54,13 +57,20 @@ stderr; JSON stdout contains one JSON document without terminal decoration.
 
 ## JSON schema version 1
 
-Top-level keys: `schema_version`, `hardcheck_version`, `scope`, `summary`,
+Top-level keys: `schema_version`, `language`, `hardcheck_version`, `scope`, `summary`,
 `scan_summary`, `findings`. Each summary includes all five status counts, total,
 assessed count, score and coverage. Findings contain identifiers, category,
 severity, status, guidance, reference and allowlisted evidence. Raw detail and
 command output are omitted. Numeric mode bits are integers in JSON and octal
-in terminal explanations. JSON always includes guidance; `--explain` expands
-terminal findings only. No timestamp, username, hostname or private path is added.
+in terminal/HTML explanations. JSON and HTML always include guidance; `--explain` expands
+terminal findings only. No timestamp, username, hostname or private path is added
+to JSON. HTML and terminal may display validated distribution/init/container
+markers and allowlisted scope notes; arbitrary raw detail is not rendered.
+
+`language` is an additive field in schema version 1. Field names, control IDs,
+status/severity tokens, evidence tokens and numeric values do not change with
+language. Human guidance and `scope.limitations` are localized. Consumers should
+use machine tokens rather than compare translated prose.
 
 Tests use synthetic findings and temporary destinations to verify mixed and
 empty results, hidden errors, serialization, privacy, permissions, overwrite

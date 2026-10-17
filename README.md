@@ -4,15 +4,16 @@ Read-only Linux security auditing CLI, implemented in Python 3.11+.
 
 ## Current status
 
-The first six milestones are implemented: eighteen SSH, local account,
+The first seven milestones are implemented: eighteen SSH, local account,
 filesystem, network, kernel and legacy-service checks; an isolated scan engine,
 strict YAML policies and bounded read-only queries. Environment markers label
 Linux distribution, init system and possible container scope. Quality checks can be started
 manually from GitHub Actions on Python 3.11 and 3.12; commits do not trigger them.
 
-Terminal summaries, transparent scoring and versioned JSON reports are available.
-HTML and translated output remain planned; unsupported options return exit code 2.
-See [reporting, scoring and exit codes](docs/reporting.md).
+Terminal summaries, transparent scoring, versioned JSON and offline HTML reports
+are available in English and Turkish (`--lang en|tr`). The inspection remains read-only.
+See [reporting, scoring and exit codes](docs/reporting.md) and
+[step 7: HTML and languages](docs/step-07.md).
 
 ## Install and run
 
@@ -25,6 +26,9 @@ python -m hardcheck list-checks
 python -m hardcheck scan
 python -m hardcheck scan --explain
 python -m hardcheck scan --format json
+python -m hardcheck scan --lang tr --explain
+mkdir -p scan-output
+python -m hardcheck scan --format html --lang tr --output scan-output/report-tr.html
 python -m hardcheck scan --config examples/policy.yaml --min-severity high
 ```
 
