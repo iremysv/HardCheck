@@ -8,26 +8,29 @@ from hardcheck.engine import run_checks
 from hardcheck.models import Severity, Status
 
 
-@pytest.mark.parametrize("content", [
-    "!!python/object/apply:os.system ['touch /tmp/hardcheck-no']",
-    "version: 1\nversion: 1\nchecks: {}",
-    "version: true\nchecks: {}",
-    "version: 2\nchecks: {}",
-    "version: 1\nchecks: []",
-    "version: 1\nchecks: {SSH-099: {}}",
-    "version: 1\nchecks: {SSH-001: {enabled: 1}}",
-    "version: 1\nchecks: {SSH-001: {severity: urgent}}",
-    "version: 1\nchecks: {SSH-001: {command: whoami}}",
-    "version: 1\nchecks: {SSH-001: {}, SSH-001: {}}",
-    "version: 1\nchecks: &a {SSH-001: *a}",
-    "version: 1\nchecks: {}\nextra: true",
-    "version: 1\nchecks: {SSH-001: {severity: [high]}}",
-    "version: 1\nchecks: {SSH-001: {severity: null}}",
-    "[",
-    "",
-    "a: " + "[" * 30 + "0" + "]" * 30,
-    "#" * 65537,
-])
+@pytest.mark.parametrize(
+    "content",
+    [
+        "!!python/object/apply:os.system ['touch /tmp/hardcheck-no']",
+        "version: 1\nversion: 1\nchecks: {}",
+        "version: true\nchecks: {}",
+        "version: 2\nchecks: {}",
+        "version: 1\nchecks: []",
+        "version: 1\nchecks: {SSH-099: {}}",
+        "version: 1\nchecks: {SSH-001: {enabled: 1}}",
+        "version: 1\nchecks: {SSH-001: {severity: urgent}}",
+        "version: 1\nchecks: {SSH-001: {command: whoami}}",
+        "version: 1\nchecks: {SSH-001: {}, SSH-001: {}}",
+        "version: 1\nchecks: &a {SSH-001: *a}",
+        "version: 1\nchecks: {}\nextra: true",
+        "version: 1\nchecks: {SSH-001: {severity: [high]}}",
+        "version: 1\nchecks: {SSH-001: {severity: null}}",
+        "[",
+        "",
+        "a: " + "[" * 30 + "0" + "]" * 30,
+        "#" * 65537,
+    ],
+)
 def test_invalid_policy_is_rejected(tmp_path, content):
     path = tmp_path / "policy.yaml"
     path.write_text(content)
@@ -46,9 +49,10 @@ def test_policy_controls_existing_checks(tmp_path, monkeypatch):
 
     monkeypatch.setattr(SshRootLoginDisabledCheck, "run", forbidden)
     # Disable all remaining checks to avoid any host reads in this test.
-    path.write_text("version: 1\nchecks:\n" + "".join(
-        f"  SSH-00{i}: {{enabled: false}}\n" for i in range(1, 5)
-    ))
+    path.write_text(
+        "version: 1\nchecks:\n"
+        + "".join(f"  SSH-00{i}: {{enabled: false}}\n" for i in range(1, 5))
+    )
     results = run_checks(load_policy(path))
     assert len(results) == 4
     assert all(result.status == Status.SKIP for result in results)
@@ -116,15 +120,17 @@ def test_disabled_check_does_not_construct_and_keeps_severity(tmp_path, monkeypa
     assert results[0].severity == Severity.CRITICAL
 
 
-@pytest.mark.parametrize("args", [
-    ["--format", "html"],
-    ["--output", ""],
-])
-def test_unimplemented_options_do_not_silently_succeed(args, monkeypatch, capsys):
+@pytest.mark.parametrize(
+    "args",
+    [
+        ["--output", ""],
+    ],
+)
+def test_invalid_output_does_not_start_scan(args, monkeypatch, capsys):
     import hardcheck.cli as cli
 
     def forbidden(*args):
-        raise AssertionError("Unsupported options must not scan")
+        raise AssertionError("Invalid output must not scan")
 
     monkeypatch.setattr(cli, "run_checks", forbidden)
     assert main(["scan", *args]) == 2

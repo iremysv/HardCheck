@@ -5,6 +5,8 @@ import os
 import sys
 from pathlib import Path
 
+from jinja2 import TemplateError
+
 from hardcheck import __version__
 from hardcheck.config import ConfigError, load_policy
 from hardcheck.engine import run_checks
@@ -12,6 +14,7 @@ from hardcheck.localization import translate
 from hardcheck.models import Severity, Status
 from hardcheck.registry import get_registered_checks
 from hardcheck.reporting import json_report, terminal_report
+from hardcheck.reports.html import html_report
 from hardcheck.scoring import exit_code
 
 
@@ -26,8 +29,15 @@ def build_parser() -> argparse.ArgumentParser:
         choices=("terminal", "json", "html"),
         default="terminal",
     )
-    scan.add_argument("--output")
-    scan.add_argument("--lang", choices=("en", "tr"), default="en")
+    scan.add_argument(
+        "--output", help="Create a private report file; existing paths are rejected"
+    )
+    scan.add_argument(
+        "--lang",
+        choices=("en", "tr"),
+        default="en",
+        help="Report and diagnostic language (default: en)",
+    )
     scan.add_argument("--config")
     scan.add_argument(
         "--explain",
@@ -46,9 +56,6 @@ def main(argv: list[str] | None = None) -> int:
         for check_class in get_registered_checks():
             print(check_class.check_id)
         return 0
-    if arguments.format == "html":
-        print("This option is not available in the initial release.", file=sys.stderr)
-        return 2
     if arguments.output == "":
         print(translate("output_empty", arguments.lang), file=sys.stderr)
         return 2
@@ -64,14 +71,22 @@ def main(argv: list[str] | None = None) -> int:
         priorities = list(Severity)
         minimum = priorities.index(Severity(arguments.min_severity))
         results = [r for r in results if priorities.index(r.severity) >= minimum]
-    if arguments.format == "json":
-        report = json_report(
-            results, all_results, arguments.min_severity, arguments.lang
-        )
-    else:
-        report = terminal_report(
-            results, all_results, arguments.explain, arguments.lang
-        )
+    try:
+        if arguments.format == "json":
+            report = json_report(
+                results, all_results, arguments.min_severity, arguments.lang
+            )
+        elif arguments.format == "html":
+            report = html_report(
+                results, all_results, arguments.min_severity, arguments.lang
+            )
+        else:
+            report = terminal_report(
+                results, all_results, arguments.explain, arguments.lang
+            )
+    except (OSError, TemplateError, ValueError):
+        print(translate("render_error", arguments.lang), file=sys.stderr)
+        return 2
     try:
         if arguments.output is None:
             print(report, end="")

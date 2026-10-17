@@ -31,7 +31,7 @@ def test_json_contract_and_no_raw_detail(monkeypatch, capsys):
     assert "private-token" not in output
 
 
-@pytest.mark.parametrize("format", ["terminal", "json"])
+@pytest.mark.parametrize("format", ["terminal", "json", "html"])
 def test_hidden_error_still_returns_two(format, monkeypatch, capsys):
     monkeypatch.setattr(
         cli,
@@ -45,6 +45,8 @@ def test_hidden_error_still_returns_two(format, monkeypatch, capsys):
         assert report["scope"]["hidden_controls"] == 1
         assert report["scan_summary"]["counts"]["ERROR"] == 1
         assert report["summary"]["counts"]["ERROR"] == 0
+    elif format == "html":
+        assert "scan ERROR=1" in output
     else:
         assert "scan ERROR=1" in output
 
@@ -62,13 +64,13 @@ def test_empty_filtered_selection_is_not_perfect(monkeypatch, capsys):
 
 
 def test_invalid_input_is_stderr_only(capsys):
-    assert cli.main(["scan", "--format", "html"]) == 2
+    assert cli.main(["scan", "--output", ""]) == 2
     captured = capsys.readouterr()
     assert captured.err
     assert not captured.out
 
 
-@pytest.mark.parametrize("format", ["terminal", "json"])
+@pytest.mark.parametrize("format", ["terminal", "json", "html"])
 def test_output_is_private_and_never_overwrites(format, tmp_path, monkeypatch, capsys):
     import os
     import stat
