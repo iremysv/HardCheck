@@ -1,0 +1,188 @@
+all: All
+assessed: assessed
+category: Category
+category.filesystem: Filesystem
+category.kernel: Kernel
+category.network: Network
+category.services: Services
+category.ssh: SSH
+category.users: Local accounts
+check_id: Check
+checks.FS-001.expected: Root-owned regular file with mode 0644
+checks.FS-001.rationale: Untrusted writers could alter account identities and privilege mappings.
+checks.FS-001.remediation: Verify the real target, root ownership, backups and distribution
+  policy before correcting mode to 0644. Review parent directories and ACLs separately; do
+  not recursively chmod /etc.
+checks.FS-001.title: Protect passwd metadata
+checks.FS-002.expected: Root-owned regular file; mode subset of 0640
+checks.FS-002.rationale: Password hashes require tightly restricted access.
+checks.FS-002.remediation: Verify root ownership and a trusted shadow-reader group, then restrict
+  permissions to the approved subset of 0640. Review ACLs and group membership separately.
+  Never print or copy hashes into reports.
+checks.FS-002.title: Protect shadow metadata
+checks.FS-003.expected: Root-owned directory with sticky bit
+checks.FS-003.rationale: The sticky bit restricts deletion of other users' directory entries.
+checks.FS-003.remediation: Verify /tmp is the intended directory and set the sticky bit while
+  preserving appropriate access. Review mount policy separately; the sticky bit alone does
+  not make temporary-file handling secure.
+checks.FS-003.title: Protect shared temporary entries
+checks.FS-004.expected: No world-writable regular files
+checks.FS-004.rationale: Unprivileged users may alter security-relevant configuration.
+checks.FS-004.remediation: Identify affected paths locally using a trusted tool, verify ownership
+  and application requirements, then remove unintended world-write permission individually.
+  Avoid recursive permission changes.
+checks.FS-004.title: Review world-writable configuration files
+checks.KRN-001.expected: randomize_va_space = 2
+checks.KRN-001.rationale: Address randomization can make memory exploitation less predictable.
+checks.KRN-001.remediation: Check architecture and workload compatibility before enabling
+  full ASLR and its persistent policy. Verify the live value after changes; ASLR is not a
+  substitute for memory-safe software.
+checks.KRN-001.title: Enable full address randomization
+checks.KRN-002.expected: dmesg_restrict = 1
+checks.KRN-002.rationale: Unrestricted kernel logs may disclose security-relevant details.
+checks.KRN-002.remediation: Review monitoring and operational access requirements, then restrict
+  unprivileged kernel-log access and verify persistence. Review other log access paths separately.
+checks.KRN-002.title: Restrict kernel log access
+checks.NET-001.expected: Supported active firewall evidence
+checks.NET-001.rationale: Active filtering can reduce unintended network exposure.
+checks.NET-001.remediation: Review the host firewall and IPv4/IPv6 rules from a recovery-capable
+  session. Preserve required management access before enabling or changing filtering. Never
+  flush rules as an automatic fix.
+checks.NET-001.title: Verify active input filtering
+checks.NET-002.expected: No TCP listeners on ports 21 and 23
+checks.NET-002.rationale: Legacy services may expose credentials without transport protection.
+checks.NET-002.remediation: Identify listeners and service owners locally; migrate to an approved
+  encrypted alternative before disabling unnecessary services. Port numbers alone do not identify
+  a protocol or prove remote reachability.
+checks.NET-002.title: Review FTP and telnet listeners
+checks.NET-003.expected: IPv4 and global IPv6 forwarding both equal 0
+checks.NET-003.rationale: Unneeded forwarding may allow unintended routing through an endpoint.
+checks.NET-003.remediation: Confirm this system is not a router, VPN gateway or container
+  host requiring forwarding. Only then review live and persistent settings; evaluate individual
+  IPv6 interface overrides separately.
+checks.NET-003.title: Review IP forwarding
+checks.SSH-001.expected: PermitRootLogin no
+checks.SSH-001.rationale: Direct root login bypasses individual account accountability.
+checks.SSH-001.remediation: Keep a tested administrative session and recovery access. Review
+  global and Match settings, disable direct root login, validate with sshd -t, and test a
+  separate login before any reload.
+checks.SSH-001.title: Disable direct root SSH login
+checks.SSH-002.expected: PasswordAuthentication no
+checks.SSH-002.rationale: Password authentication exposes SSH to password guessing and reuse.
+checks.SSH-002.remediation: Provision and test an alternative authentication method and recovery
+  access first. Review PAM/keyboard-interactive paths, validate sshd configuration and test
+  a separate session before reloading.
+checks.SSH-002.title: Disable SSH password authentication
+checks.SSH-003.expected: MaxAuthTries between 1 and 4
+checks.SSH-003.rationale: A per-connection limit reduces repeated authentication attempts.
+checks.SSH-003.remediation: Review authentication compatibility, set MaxAuthTries to 1–4,
+  validate with sshd -t and test before reload. This is not a global rate limiter.
+checks.SSH-003.title: Limit SSH authentication attempts
+checks.SSH-004.expected: PermitEmptyPasswords no
+checks.SSH-004.rationale: Empty passwords may allow unintended unauthenticated access.
+checks.SSH-004.remediation: Disable PermitEmptyPasswords, review local account/PAM policy,
+  validate with sshd -t and verify a separate session before reload.
+checks.SSH-004.title: Reject empty SSH passwords
+checks.SVC-001.expected: No known telnet/rsh packages or units
+checks.SVC-001.rationale: Legacy remote access can expose credentials and weak trust models.
+checks.SVC-001.remediation: Confirm package/unit ownership and dependencies before disabling
+  or removing legacy software. Migrate clients first; review custom units, inetd/xinetd and
+  manually installed programs separately.
+checks.SVC-001.title: Review legacy remote-access software
+checks.USR-001.expected: No empty local shadow password fields
+checks.USR-001.rationale: An empty password field can permit passwordless authentication.
+checks.USR-001.remediation: Use trusted account-management tools to lock or set credentials
+  for affected accounts after reviewing service dependencies. Do not expose shadow content
+  or edit password hashes directly.
+checks.USR-001.title: Reject empty local password fields
+checks.USR-002.expected: Exactly one UID 0 account named root
+checks.USR-002.rationale: Additional UID 0 identities have root-equivalent privileges.
+checks.USR-002.remediation: Review privileged identities and file ownership with an administrator;
+  remove unintended UID 0 assignments using account-management tools. Preserve recovery access
+  and do not delete accounts blindly.
+checks.USR-002.title: Restrict UID zero to root
+checks.USR-003.expected: Explicit PASS_MAX_DAYS between 1 and 90
+checks.USR-003.rationale: Project policy bounds the default password lifetime for new accounts.
+checks.USR-003.remediation: Review organizational authentication policy before changing login.defs.
+  Existing accounts need a separate review; changing this default does not alter their expiry
+  and is not a universal password policy.
+checks.USR-003.title: Review password age defaults
+checks.USR-004.expected: Configured length after credits >= 12
+checks.USR-004.rationale: Positive character credits can reduce the actual required length.
+checks.USR-004.remediation: Review pwquality snippets, positive credits and enforcing; configure
+  at least 12 actual characters. Verify PAM activation, argument overrides and root exemptions
+  separately. Existing passwords are not inspected.
+checks.USR-004.title: Configure minimum password length
+collected: Collected controls
+coverage: Coverage
+displayed_controls: displayed controls
+evidence.assessment: assessment
+evidence.backend: backend
+evidence.coverage: coverage
+evidence.enforcing: enforcing
+evidence.entries_inspected: entries_inspected
+evidence.ipv4: ipv4
+evidence.ipv6: ipv6
+evidence.legacy_package: legacy_package
+evidence.legacy_unit: legacy_unit
+evidence.mode_bits: mode_bits
+evidence.noncompliant_records: noncompliant_records
+evidence.owner_uid: owner_uid
+evidence.positive_credits: positive_credits
+evidence.records_inspected: records_inspected
+evidence.setting: setting
+evidence.sticky_bit: sticky_bit
+evidence.tcp_21_listeners: tcp_21_listeners
+evidence.tcp_23_listeners: tcp_23_listeners
+expected: Expected
+fallback_detail: Review the safe evidence and scope limitations.
+filter: Minimum severity
+findings: Findings
+hidden: Hidden controls
+invalid_config: Invalid configuration; review the policy file.
+limitations: Bounded observations; not a security guarantee.
+na: N/A
+namespace: host namespace unverified
+no_findings: No controls selected; no compliance conclusion.
+observed: Observed
+output_empty: Output path must not be empty.
+rationale: Rationale
+read_only: Read-only inspection. Remediation requires manual review.
+reference: Reference
+remediation: Manual remediation
+render_error: Could not render report; check packaged report resources.
+report_title: HardCheck security report
+scan_errors: scan ERROR
+scan_summary: All collected controls
+scope: scope
+score: Score
+score_note: 'Equal weight: PASS / (PASS + FAIL). WARN, SKIP and ERROR are unscored. Coverage:
+  (PASS + FAIL) / selected controls.'
+severity: Severity
+severity.critical: Critical
+severity.high: High
+severity.low: Low
+severity.medium: Medium
+status: Status
+status.ERROR: Check error
+status.FAIL: Failed
+status.PASS: Passed
+status.SKIP: Skipped
+status.WARN: Uncertain
+summary: Summary
+title: Title
+value.absent: absent
+value.complete_within_scope: complete_within_scope
+value.invalid: invalid
+value.iptables: iptables
+value.nft: nft
+value.no: 'no'
+value.partial: partial
+value.present: present
+value.ufw: ufw
+value.unknown: unknown
+value.yes: 'yes'
+version: Version
+world_writable: World-writable regular files; review evidence for counts and traversal coverage;
+  symlinks and special files excluded; ACLs not assessed
+write_error: Could not write report; choose a new writable path.

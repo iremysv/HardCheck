@@ -1,0 +1,199 @@
+all: Tümü
+assessed: değerlendirilen
+category: Kategori
+category.filesystem: Dosya sistemi
+category.kernel: Çekirdek
+category.network: Ağ
+category.services: Servisler
+category.ssh: SSH
+category.users: Yerel hesaplar
+check_id: Kontrol
+checks.FS-001.expected: Root sahibi olan normal dosya; tam izin değeri 0644
+checks.FS-001.rationale: Güvenilmeyen yazma erişimi, hesap kimliklerini ve yetki eşlemelerini
+  değiştirebilir.
+checks.FS-001.remediation: İzinleri 0644 yapmadan önce gerçek hedefi, root sahipliğini, yedekleri
+  ve dağıtım politikasını doğrulayın. Üst dizinleri ve ACL izinlerini ayrıca inceleyin; /etc
+  üzerinde özyinelemeli chmod çalıştırmayın.
+checks.FS-001.title: Passwd dosyasının üst verisini koruyun
+checks.FS-002.expected: Root sahibi olan normal dosya; izinler 0640 sınırının alt kümesi olmalı
+checks.FS-002.rationale: Parola özetlerine erişim sıkı biçimde kısıtlanmalıdır.
+checks.FS-002.remediation: Root sahipliğini ve güvenilir shadow okuma grubunu doğrulayın;
+  izinleri onaylı 0640 alt kümesiyle sınırlayın. ACL ve grup üyeliklerini ayrıca inceleyin.
+  Parola özetlerini asla raporlara yazmayın veya kopyalamayın.
+checks.FS-002.title: Shadow dosyasının üst verisini koruyun
+checks.FS-003.expected: Root sahibi olan dizinde sticky bit bulunmalı
+checks.FS-003.rationale: Sticky bit, diğer kullanıcıların dizin girdilerini silme yetkisini
+  sınırlar.
+checks.FS-003.remediation: /tmp hedefini doğrulayın ve uygun erişimi koruyarak sticky bit
+  ayarlayın. Bağlama politikasını ayrıca inceleyin; sticky bit tek başına geçici dosya kullanımını
+  güvenli kılmaz.
+checks.FS-003.title: Paylaşılan geçici dizin girdilerini koruyun
+checks.FS-004.expected: Herkesin yazabildiği normal dosya bulunmamalı
+checks.FS-004.rationale: Yetkisiz kullanıcılar güvenliği etkileyen yapılandırmaları değiştirebilir.
+checks.FS-004.remediation: Etkilenen yolları güvenilir bir araçla yerelde belirleyin; sahipliği
+  ve uygulama gereksinimlerini doğrulayıp istenmeyen genel yazma iznini dosya bazında kaldırın.
+  Özyinelemeli izin değişikliklerinden kaçının.
+checks.FS-004.title: Herkesin yazabildiği ayar dosyalarını inceleyin
+checks.KRN-001.expected: randomize_va_space = 2
+checks.KRN-001.rationale: Adres rastgeleleştirmesi, bellek açıklarının kullanılmasını daha
+  az öngörülebilir kılabilir.
+checks.KRN-001.remediation: Tam ASLR ve kalıcı politikasını etkinleştirmeden önce mimari ve
+  iş yükü uyumluluğunu kontrol edin. Değişikliklerden sonra canlı değeri doğrulayın; ASLR
+  bellek güvenli yazılımın yerine geçmez.
+checks.KRN-001.title: Tam adres rastgeleleştirmesini etkinleştirin
+checks.KRN-002.expected: dmesg_restrict = 1
+checks.KRN-002.rationale: Kısıtlanmamış çekirdek günlükleri, güvenlikle ilgili ayrıntıları
+  açığa çıkarabilir.
+checks.KRN-002.remediation: İzleme ve işletim erişimi gereksinimlerini inceleyin; yetkisiz
+  çekirdek günlüğü erişimini kısıtlayıp kalıcılığını doğrulayın. Diğer günlük erişim yollarını
+  ayrıca inceleyin.
+checks.KRN-002.title: Çekirdek günlüğü erişimini kısıtlayın
+checks.NET-001.expected: Desteklenen etkin güvenlik duvarı kanıtı
+checks.NET-001.rationale: Etkin filtreleme, istenmeyen ağ erişimini azaltabilir.
+checks.NET-001.remediation: Kurtarma erişimi olan bir oturumdan ana sistemin güvenlik duvarı
+  ile IPv4/IPv6 kurallarını inceleyin. Filtrelemeyi açmadan veya değiştirmeden önce gerekli
+  yönetim erişimini koruyun. Otomatik çözüm olarak kuralları asla temizlemeyin.
+checks.NET-001.title: Etkin gelen trafik filtrelemesini doğrulayın
+checks.NET-002.expected: 21 ve 23 numaralı TCP portlarında dinleyici bulunmamalı
+checks.NET-002.rationale: Eski servisler, kimlik bilgilerini taşıma şifrelemesi olmadan açığa
+  çıkarabilir.
+checks.NET-002.remediation: Dinleyicileri ve servis sahiplerini yerelde belirleyin; gereksiz
+  servisleri kapatmadan önce onaylı şifreli bir alternatife geçin. Port numarası tek başına
+  protokolü veya uzaktan erişilebilirliği kanıtlamaz.
+checks.NET-002.title: FTP ve telnet dinleyicilerini inceleyin
+checks.NET-003.expected: IPv4 ve genel IPv6 yönlendirme değerleri 0 olmalı
+checks.NET-003.rationale: Gereksiz yönlendirme, uç nokta üzerinden istenmeyen trafiğin geçirilmesine
+  izin verebilir.
+checks.NET-003.remediation: Sistemin yönlendirmeye ihtiyaç duyan bir yönlendirici, VPN ağ
+  geçidi veya konteyner ana sistemi olmadığını doğrulayın. Ardından canlı ve kalıcı ayarları
+  inceleyin; IPv6 arayüz geçersiz kılmalarını ayrıca değerlendirin.
+checks.NET-003.title: IP yönlendirmesini inceleyin
+checks.SSH-001.expected: PermitRootLogin no
+checks.SSH-001.rationale: Doğrudan root girişi, işlemlerin kişisel hesaplarla ilişkilendirilmesini
+  engeller.
+checks.SSH-001.remediation: Denenmiş bir yönetici oturumunu ve kurtarma erişimini koruyun.
+  Genel ve Match ayarlarını inceleyin, doğrudan root girişini kapatın, sshd -t ile doğrulayın
+  ve yeniden yüklemeden önce ayrı bir oturumda giriş deneyin.
+checks.SSH-001.title: Doğrudan root SSH girişini kapatın
+checks.SSH-002.expected: PasswordAuthentication no
+checks.SSH-002.rationale: Parolayla giriş, SSH hizmetini parola tahmini ve yeniden kullanılan
+  parolalara karşı açık bırakır.
+checks.SSH-002.remediation: Önce alternatif doğrulama yöntemini ve kurtarma erişimini kurup
+  deneyin. PAM ve klavye etkileşimli doğrulama yollarını inceleyin; sshd ayarlarını doğrulayıp
+  yeniden yüklemeden önce ayrı bir oturum deneyin.
+checks.SSH-002.title: SSH parola doğrulamasını kapatın
+checks.SSH-003.expected: 'MaxAuthTries: 1–4'
+checks.SSH-003.rationale: Bağlantı başına sınır, yinelenen doğrulama denemelerini azaltır.
+checks.SSH-003.remediation: Doğrulama uyumluluğunu inceleyin, MaxAuthTries değerini 1–4 yapın,
+  sshd -t ile doğrulayın ve yeniden yüklemeden önce deneyin. Bu ayar genel bir hız sınırlayıcı
+  değildir.
+checks.SSH-003.title: SSH doğrulama denemelerini sınırlayın
+checks.SSH-004.expected: PermitEmptyPasswords no
+checks.SSH-004.rationale: Boş parolalar istenmeyen, doğrulamasız erişime izin verebilir.
+checks.SSH-004.remediation: PermitEmptyPasswords ayarını kapatın; yerel hesap ve PAM politikasını
+  inceleyin, sshd -t ile doğrulayın ve yeniden yüklemeden önce ayrı bir oturum deneyin.
+checks.SSH-004.title: Boş SSH parolalarını reddedin
+checks.SVC-001.expected: Bilinen telnet/rsh paketleri veya birimleri bulunmamalı
+checks.SVC-001.rationale: Eski uzaktan erişim yazılımları kimlik bilgilerini açığa çıkarabilir
+  ve zayıf güven modelleri kullanabilir.
+checks.SVC-001.remediation: Eski yazılımı kapatmadan veya kaldırmadan önce paket/birim sahipliğini
+  ve bağımlılıklarını doğrulayın. Önce istemcileri taşıyın; özel birimleri, inetd/xinetd tanımlarını
+  ve elle kurulmuş programları ayrıca inceleyin.
+checks.SVC-001.title: Eski uzaktan erişim yazılımlarını inceleyin
+checks.USR-001.expected: Yerel shadow dosyasında boş parola alanı bulunmamalı
+checks.USR-001.rationale: Boş bir parola alanı, parolasız doğrulamaya izin verebilir.
+checks.USR-001.remediation: Servis bağımlılıklarını inceledikten sonra güvenilir hesap yönetim
+  araçlarıyla etkilenen hesapları kilitleyin veya kimlik bilgilerini ayarlayın. Shadow içeriğini
+  açığa çıkarmayın; parola özetlerini doğrudan düzenlemeyin.
+checks.USR-001.title: Boş yerel parola alanlarını reddedin
+checks.USR-002.expected: UID 0 olan tek hesap root olmalı
+checks.USR-002.rationale: Ek UID 0 hesapları root ile eşdeğer yetkilere sahiptir.
+checks.USR-002.remediation: Yetkili hesapları ve dosya sahipliğini yöneticiyle inceleyin;
+  istenmeyen UID 0 atamalarını hesap yönetim araçlarıyla kaldırın. Kurtarma erişimini koruyun;
+  hesapları incelemeden silmeyin.
+checks.USR-002.title: UID 0 yetkisini root ile sınırlayın
+checks.USR-003.expected: 'Açıkça tanımlanmış PASS_MAX_DAYS: 1–90'
+checks.USR-003.rationale: Proje politikası, yeni hesapların varsayılan parola ömrünü sınırlar.
+checks.USR-003.remediation: login.defs değişikliğinden önce kurumun doğrulama politikasını
+  inceleyin. Mevcut hesapları ayrıca değerlendirin; bu varsayılanı değiştirmek onların sürelerini
+  değiştirmez ve evrensel bir parola politikası değildir.
+checks.USR-003.title: Parola yaşı varsayılanlarını inceleyin
+checks.USR-004.expected: Karakter kredileri sonrası uzunluk en az 12 olmalı
+checks.USR-004.rationale: Pozitif karakter kredileri, gereken gerçek parola uzunluğunu azaltabilir.
+checks.USR-004.remediation: pwquality ek ayarlarını, pozitif kredileri ve enforcing ayarını
+  inceleyin; en az 12 gerçek karakter gerektirin. PAM etkinliğini, parametre geçersiz kılmalarını
+  ve root istisnalarını ayrıca doğrulayın. Mevcut parolalar incelenmez.
+checks.USR-004.title: En düşük parola uzunluğunu ayarlayın
+collected: Toplanan kontroller
+coverage: Değerlendirme oranı
+displayed_controls: gösterilen kontroller
+evidence.assessment: değerlendirme
+evidence.backend: altyapı
+evidence.coverage: tarama kapsamı
+evidence.enforcing: uygulama
+evidence.entries_inspected: incelenen girdiler
+evidence.ipv4: IPv4
+evidence.ipv6: IPv6
+evidence.legacy_package: eski paket
+evidence.legacy_unit: eski birim
+evidence.mode_bits: izin bitleri
+evidence.noncompliant_records: uygunsuz kayıtlar
+evidence.owner_uid: sahip UID
+evidence.positive_credits: pozitif krediler
+evidence.records_inspected: incelenen kayıtlar
+evidence.setting: ayar
+evidence.sticky_bit: sticky bit
+evidence.tcp_21_listeners: TCP 21 dinleyicileri
+evidence.tcp_23_listeners: TCP 23 dinleyicileri
+expected: Beklenen
+fallback_detail: Güvenli kanıtları ve kapsam sınırlarını inceleyin.
+filter: En düşük önem
+findings: Bulgular
+hidden: Gizlenen kontroller
+invalid_config: Geçersiz yapılandırma; politika dosyasını gözden geçirin.
+limitations: Sınırlı gözlemler; güvenlik garantisi değildir.
+na: Hesaplanamadı
+namespace: ana sistem ad alanı doğrulanmadı
+no_findings: Kontrol seçilmedi; uyumluluk sonucu çıkarılamaz.
+observed: Gözlenen
+output_empty: Çıktı dosyasının yolu boş olamaz.
+rationale: Gerekçe
+read_only: Salt okunur inceleme. Düzeltmeler elle değerlendirme gerektirir.
+reference: Kaynak
+remediation: Elle düzeltme önerisi
+render_error: Rapor oluşturulamadı; paket içindeki rapor kaynaklarını kontrol edin.
+report_title: HardCheck güvenlik raporu
+scan_errors: tarama ERROR
+scan_summary: Toplanan tüm kontroller
+scope: kapsam
+score: Puan
+score_note: 'Eşit ağırlık: PASS / (PASS + FAIL). WARN, SKIP ve ERROR puanlanmaz. Değerlendirme
+  oranı: (PASS + FAIL) / seçilen kontroller.'
+severity: Önem
+severity.critical: Kritik
+severity.high: Yüksek
+severity.low: Düşük
+severity.medium: Orta
+status: Durum
+status.ERROR: Kontrol hatası
+status.FAIL: Uygun değil
+status.PASS: Uygun
+status.SKIP: Atlandı
+status.WARN: Belirsiz
+summary: Özet
+title: Başlık
+value.absent: yok
+value.complete_within_scope: belirtilen kapsam içinde tam
+value.invalid: geçersiz
+value.iptables: iptables
+value.nft: nft
+value.no: hayır
+value.partial: kısmi
+value.present: mevcut
+value.ufw: ufw
+value.unknown: bilinmiyor
+value.yes: evet
+version: Sürüm
+world_writable: Herkesin yazabildiği normal dosyalar; sayılar ve tarama kapsamı için kanıtlara
+  bakın; sembolik bağlantılar ve özel dosyalar hariçtir; ACL değerlendirilmez
+write_error: Rapor yazılamadı; yazılabilir yeni bir dosya yolu seçin.
