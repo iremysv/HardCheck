@@ -21,7 +21,7 @@ hardcheck = "hardcheck.cli:main"
 where = ["src"]
 
 [tool.setuptools.package-data]
-hardcheck = ["i18n/*.yaml", "rules/*.yaml", "reports/templates/*.j2"]
+hardcheck = ["i18n/*.yaml", "rules/*.yaml", "reports/templates/*.j2", "reports/templates/*.css"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

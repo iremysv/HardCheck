@@ -1,0 +1,36 @@
+:root { color-scheme: light; font-family: system-ui, sans-serif; color: #1e293b; background: #f1f5f9; }
+* { box-sizing: border-box; }
+body { margin: 0; line-height: 1.6; }
+main { max-width: 1120px; margin: auto; padding: 40px 24px; }
+header { border-top: 5px solid #2563eb; padding: 26px 30px; background: white; border-radius: 10px; }
+h1 { margin: 0 0 6px; font-size: 2rem; letter-spacing: -.04em; }
+h2 { margin: 32px 0 14px; font-size: 1.35rem; }
+h3 { margin: 0; font-size: 1.15rem; }
+p { margin: 8px 0; }
+.muted, footer { color: #475569; }
+.notice { background: #fffbeb; border-left: 4px solid #b45309; padding: 14px 20px; margin: 20px 0; }
+.metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin: 20px 0; }
+.metric { background: white; border: 1px solid #cbd5e1; border-radius: 8px; padding: 18px; }
+.metric dt { color: #475569; font-size: .9rem; }
+.metric dd { margin: 5px 0 0; font-size: 1.7rem; font-weight: 700; }
+.statuses { display: flex; flex-wrap: wrap; gap: 12px; padding: 0; list-style: none; }
+.statuses li { background: white; padding: 6px 12px; border: 1px solid #cbd5e1; border-radius: 6px; }
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; background: white; font-size: .95rem; }
+caption { text-align: left; color: #475569; padding: 8px 0; }
+th, td { padding: 12px; border-bottom: 1px solid #e2e8f0; text-align: left; vertical-align: top; }
+th { color: #334155; background: #e2e8f0; }
+.finding { background: white; border: 1px solid #cbd5e1; border-radius: 10px; padding: 24px; margin: 18px 0; break-inside: avoid; }
+.badge { display: inline-block; font-size: .8rem; font-weight: 700; padding: 3px 8px; border-radius: 5px; background: #e2e8f0; }
+.pass { background: #dcfce7; color: #14532d; }
+.fail, .error { background: #fee2e2; color: #7f1d1d; }
+.warn { background: #fef3c7; color: #78350f; }
+.skip { background: #e2e8f0; color: #334155; }
+.finding dl { margin-bottom: 0; }
+.finding dt { font-weight: 650; margin-top: 14px; }
+.finding dd { margin: 4px 0 0; overflow-wrap: anywhere; }
+a { color: #1d4ed8; text-underline-offset: 3px; overflow-wrap: anywhere; }
+a:focus-visible { outline: 3px solid #2563eb; outline-offset: 3px; }
+footer { margin-top: 30px; font-size: .9rem; }
+@media (max-width: 700px) { .metrics { grid-template-columns: repeat(2, 1fr); } main { padding: 20px 14px; } header { padding: 22px; } h1 { font-size: 1.65rem; } }
+@media print { :root { background: white; } main { padding: 0; } .metric, .finding { box-shadow: none; } a { color: inherit; } }

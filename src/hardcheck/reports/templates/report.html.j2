@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="{{ report.language }}">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'sha256-{{ style_hash }}'; script-src 'none'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta name="referrer" content="no-referrer">
+<title>{{ labels.report_title }}</title>
+<style>{{ stylesheet }}</style>
+</head>
+<body>
+<main>
+<header>
+<h1>{{ labels.report_title }}</h1>
+<p class="muted">{{ labels.read_only }}</p>
+<p class="muted">{{ labels.version }} {{ report.hardcheck_version }} · {{ labels.filter }}: {{ filter_label }}</p>
+</header>
+<aside class="notice" aria-label="{{ labels.scope }}">
+<strong>{{ report.scope.limitations }}</strong>
+<p>{{ labels.scope }}: {{ labels.displayed_controls }}; {{ labels.namespace }}.</p>
+<p>{{ labels.score_note }}</p>
+</aside>
+<dl class="metrics">
+<div class="metric"><dt>{{ labels.score }}</dt><dd>{{ score }}</dd></div>
+<div class="metric"><dt>{{ labels.coverage }}</dt><dd>{{ coverage }}</dd></div>
+<div class="metric"><dt>{{ labels.assessed }}</dt><dd>{{ report.summary.assessed }}/{{ report.summary.total }}</dd></div>
+<div class="metric"><dt>{{ labels.hidden }}</dt><dd>{{ report.scope.hidden_controls }}</dd></div>
+</dl>
+<h2>{{ labels.summary }}</h2>
+<ul class="statuses">
+{% for status, count in report.summary.counts.items() %}
+<li><span class="badge {{ status|lower }}">{{ status }}</span> {{ labels['status.' ~ status] }}: <strong>{{ count }}</strong></li>
+{% endfor %}
+</ul>
+{% if report.scope.hidden_controls %}
+<aside class="notice">
+<strong>{{ labels.hidden }}: {{ report.scope.hidden_controls }}; {{ labels.scan_errors }}={{ report.scan_summary.counts.ERROR }}</strong>
+<p>{{ labels.collected }}: {{ report.scope.collected_controls }}</p>
+<ul class="statuses" aria-label="{{ labels.scan_summary }}">
+{% for status, count in report.scan_summary.counts.items() %}
+<li>{{ status }}: <strong>{{ count }}</strong></li>
+{% endfor %}
+</ul>
+</aside>
+{% endif %}
+<h2>{{ labels.findings }}</h2>
+{% if not report.findings %}
+<p class="notice">{{ labels.no_findings }}</p>
+{% else %}
+<div class="table-wrap">
+<table>
+<caption>{{ labels.displayed_controls }}: {{ report.summary.total }}</caption>
+<thead><tr><th scope="col">{{ labels.check_id }}</th><th scope="col">{{ labels.title }}</th><th scope="col">{{ labels.status }}</th><th scope="col">{{ labels.severity }}</th></tr></thead>
+<tbody>
+{% for finding in report.findings %}
+<tr><td>{{ finding.check_id }}</td><td>{{ finding.title }}</td><td><span class="badge {{ finding.status|lower }}">{{ finding.status }}</span> {{ finding.status_label }}</td><td>{{ finding.severity_label }}</td></tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+{% for finding in report.findings %}
+<section class="finding">
+<h3>{{ finding.check_id }} · {{ finding.title }}</h3>
+<p><span class="badge {{ finding.status|lower }}">{{ finding.status }}</span> {{ finding.status_label }} · {{ finding.severity_label }} · {{ finding.category_label }}</p>
+{% if finding.note %}<p class="muted">{{ finding.note }}</p>{% endif %}
+<dl>
+<dt>{{ labels.expected }}</dt><dd>{{ finding.expected }}</dd>
+<dt>{{ labels.observed }}</dt><dd>{% for fact in finding.evidence_labels %}{{ fact }}{% if not loop.last %}; {% endif %}{% endfor %}</dd>
+<dt>{{ labels.rationale }}</dt><dd>{{ finding.rationale }}</dd>
+<dt>{{ labels.remediation }}</dt><dd>{{ finding.remediation }}</dd>
+<dt>{{ labels.reference }}</dt><dd>{% if finding.reference_url %}<a href="{{ finding.reference_url }}" rel="noopener noreferrer">{{ finding.reference }}</a>{% else %}{{ finding.reference }}{% endif %}</dd>
+</dl>
+</section>
+{% endfor %}
+{% endif %}
+<footer>HardCheck · {{ labels.read_only }} {{ report.scope.limitations }}</footer>
+</main>
+</body>
+</html>
