@@ -3,16 +3,15 @@
 import argparse
 import os
 import sys
-from contextlib import redirect_stdout
-from io import StringIO
 from pathlib import Path
 
 from hardcheck import __version__
 from hardcheck.config import ConfigError, load_policy
 from hardcheck.engine import run_checks
+from hardcheck.localization import translate
 from hardcheck.models import Severity, Status
 from hardcheck.registry import get_registered_checks
-from hardcheck.reporting import json_report, terminal_summary
+from hardcheck.reporting import json_report, terminal_report
 from hardcheck.scoring import exit_code
 
 
@@ -47,16 +46,16 @@ def main(argv: list[str] | None = None) -> int:
         for check_class in get_registered_checks():
             print(check_class.check_id)
         return 0
-    if arguments.format == "html" or arguments.lang != "en":
+    if arguments.format == "html":
         print("This option is not available in the initial release.", file=sys.stderr)
         return 2
     if arguments.output == "":
-        print("Output path must not be empty.", file=sys.stderr)
+        print(translate("output_empty", arguments.lang), file=sys.stderr)
         return 2
     try:
         policy = load_policy(Path(arguments.config)) if arguments.config else None
-    except ConfigError as exc:
-        print(f"Invalid configuration: {exc}", file=sys.stderr)
+    except ConfigError:
+        print(translate("invalid_config", arguments.lang), file=sys.stderr)
         return 2
     results = run_checks(policy)
     all_results = results
@@ -66,12 +65,13 @@ def main(argv: list[str] | None = None) -> int:
         minimum = priorities.index(Severity(arguments.min_severity))
         results = [r for r in results if priorities.index(r.severity) >= minimum]
     if arguments.format == "json":
-        report = json_report(results, all_results, arguments.min_severity)
+        report = json_report(
+            results, all_results, arguments.min_severity, arguments.lang
+        )
     else:
-        buffer = StringIO()
-        with redirect_stdout(buffer):
-            print_terminal(results, all_results, arguments.explain)
-        report = buffer.getvalue()
+        report = terminal_report(
+            results, all_results, arguments.explain, arguments.lang
+        )
     try:
         if arguments.output is None:
             print(report, end="")
@@ -82,34 +82,6 @@ def main(argv: list[str] | None = None) -> int:
             with os.fdopen(descriptor, "w", encoding="utf-8") as stream:
                 stream.write(report)
     except OSError:
-        print("Could not write report; choose a new writable path.", file=sys.stderr)
+        print(translate("write_error", arguments.lang), file=sys.stderr)
         return 2
     return 2 if has_errors else exit_code(results)
-
-
-def print_terminal(results, all_results, explain: bool) -> None:
-    """Print findings and the displayed assessment scope."""
-    for result in results:
-        detail = f" — {result.detail}" if result.detail else ""
-        print(f"{result.check_id}: {result.status.value}{detail}")
-        if explain:
-            print(f"  Title: {result.title}")
-            print(f"  Expected: {result.expected}")
-            facts = []
-            for fact in result.evidence:
-                value = fact.value
-                if fact.key == "mode_bits" and type(value) is int:
-                    display = f"{value:04o}"
-                else:
-                    display = str(value)
-                facts.append(f"{fact.key.value}={display}")
-            print(f"  Observed: {'; '.join(facts)}")
-            print(f"  Rationale: {result.rationale}")
-            print(f"  Manual remediation: {result.remediation}")
-            print(f"  Reference: {result.reference}")
-    print(terminal_summary(results))
-    if len(results) != len(all_results):
-        print(
-            f"Hidden controls: {len(all_results) - len(results)}; "
-            f"scan ERROR={sum(r.status == Status.ERROR for r in all_results)}"
-        )

@@ -57,3 +57,67 @@ def test_missing_translation_falls_back_to_english(monkeypatch):
     assert translate("title", "tr") == "Title"
     with pytest.raises(KeyError):
         translate("nonexistent", "tr")
+
+
+def test_localized_terminal_and_json_keep_exit_codes(monkeypatch, capsys):
+    import json
+
+    from hardcheck import cli
+
+    check = get_registered_checks()[0]
+    result = check.result(check, Status.FAIL)
+    monkeypatch.setattr(cli, "run_checks", lambda _: [result])
+    for language, label in [
+        ("en", "Manual remediation:"),
+        ("tr", "Elle düzeltme önerisi:"),
+    ]:
+        assert cli.main(["scan", "--lang", language, "--explain"]) == 1
+        terminal = capsys.readouterr().out
+        assert label in terminal
+        assert f"{result.check_id}: FAIL" in terminal
+        assert cli.main(["scan", "--lang", language, "--format", "json"]) == 1
+        report = json.loads(capsys.readouterr().out)
+        assert report["language"] == language
+        assert report["findings"][0]["check_id"] == result.check_id
+        assert report["findings"][0]["status"] == "FAIL"
+        assert report["summary"]["score_percent"] == 0
+        assert report["findings"][0]["title"] in terminal
+
+
+def test_diagnostics_use_selected_language(tmp_path, monkeypatch, capsys):
+    from hardcheck import cli
+
+    def forbidden(*args):
+        raise AssertionError("Invalid configuration must not scan")
+
+    monkeypatch.setattr(cli, "run_checks", forbidden)
+    assert cli.main(["scan", "--lang", "tr", "--output", ""]) == 2
+    assert "boş olamaz" in capsys.readouterr().err
+    assert (
+        cli.main(["scan", "--lang", "tr", "--config", str(tmp_path / "missing")]) == 2
+    )
+    captured = capsys.readouterr()
+    assert "Geçersiz yapılandırma" in captured.err
+    assert not captured.out
+
+
+def test_safe_note_translates_scope_without_echoing_arbitrary_detail():
+    from dataclasses import replace
+
+    from hardcheck.localization import detail_text
+
+    check = get_registered_checks()[0]
+    original = check.result(
+        check,
+        Status.WARN,
+        "Local account file is empty; Scope: Linux=True, distribution=debian, "
+        "init=unknown, container=detected; host namespace unverified",
+    )
+    translated = detail_text(original, "tr")
+    assert "Yerel hesap dosyası boş" in translated
+    assert "dağıtım=debian" in translated
+    assert "tespit edildi" in translated
+    assert "ana sistem ad alanı doğrulanmadı" in translated
+    hostile = replace(original, detail="private-secret\x1b[31m<script>")
+    assert "private-secret" not in detail_text(hostile)
+    assert "<script>" not in detail_text(hostile, "tr")

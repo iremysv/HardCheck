@@ -117,7 +117,7 @@ def test_disabled_check_does_not_construct_and_keeps_severity(tmp_path, monkeypa
 
 
 @pytest.mark.parametrize("args", [
-    ["--lang", "tr"], ["--format", "html"],
+    ["--format", "html"],
     ["--output", ""],
 ])
 def test_unimplemented_options_do_not_silently_succeed(args, monkeypatch, capsys):

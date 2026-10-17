@@ -115,7 +115,60 @@ checks.USR-004.remediation: Review pwquality snippets, positive credits and enfo
 checks.USR-004.title: Configure minimum password length
 collected: Collected controls
 coverage: Coverage
+detail.Check could not be completed: Check could not be completed
+detail.Directive is not explicitly configured: Directive is not explicitly configured
+detail.Disabled by scan policy: Disabled by scan policy
+detail.Filesystem metadata is unavailable: Filesystem metadata is unavailable
+detail.Filesystem target is absent: Filesystem target is absent
+detail.Input filtering evidence; rule effectiveness and all families not proven; current namespace only: Input
+  filtering evidence; rule effectiveness and all families not proven; current namespace only
+detail.Known package/unit names only; custom binaries and inetd definitions not assessed; current environment only: Known
+  package/unit names only; custom binaries and inetd definitions not assessed; current environment
+  only
+detail.Legacy package detected: Legacy package detected
+detail.Legacy unit detected: Legacy unit detected
+detail.Live namespace values; persistence and host scope unverified: Live namespace values;
+  persistence and host scope unverified
+detail.Local account file cannot be evaluated: Local account file cannot be evaluated
+detail.Local account file is absent: Local account file is absent
+detail.Local account file is empty: Local account file is empty
+detail.Local file assessment; network accounts excluded: Local file assessment; network accounts
+  excluded
+detail.Malformed local account records: Malformed local account records
+detail.Missing or ambiguous PASS_MAX_DAYS: Missing or ambiguous PASS_MAX_DAYS
+detail.New-account default only; existing accounts excluded: New-account default only; existing
+  accounts excluded
+detail.No explicit minlen policy: No explicit minlen policy
+detail.No verified active supported firewall evidence: No verified active supported firewall
+  evidence
+detail.Owner and mode bits assessed; ACLs and parent paths not assessed: Owner and mode bits
+  assessed; ACLs and parent paths not assessed
+detail.Password default file is absent: Password default file is absent
+detail.Password defaults cannot be evaluated: Password defaults cannot be evaluated
+detail.Password quality policy cannot be evaluated: Password quality policy cannot be evaluated
+detail.Password quality policy is incomplete: Password quality policy is incomplete
+detail.SSH configuration could not be fully evaluated: SSH configuration could not be fully
+  evaluated
+detail.SSH configuration is absent: SSH configuration is absent
+detail.SSH configuration is unavailable: SSH configuration is unavailable
+detail.Scan directory cannot be evaluated: Scan directory cannot be evaluated
+detail.Scan directory is absent: Scan directory is absent
+detail.Static libpwquality policy; PAM activation and overrides not assessed: Static libpwquality
+  policy; PAM activation and overrides not assessed
+detail.Symlink target is not assessed: Symlink target is not assessed
+detail.TCP ports 21/23 in current namespace; alternate ports not assessed: TCP ports 21/23
+  in current namespace; alternate ports not assessed
+detail.This check requires Linux: This check requires Linux
+detail.Unsupported local account records: Unsupported local account records
 displayed_controls: displayed controls
+environment.container: container
+environment.detected: detected
+environment.distribution: distribution
+environment.false: 'no'
+environment.init: init
+environment.linux: Linux
+environment.true: 'yes'
+environment.unknown: unknown
 evidence.assessment: assessment
 evidence.backend: backend
 evidence.coverage: coverage

@@ -126,7 +126,60 @@ checks.USR-004.remediation: pwquality ek ayarlarını, pozitif kredileri ve enfo
 checks.USR-004.title: En düşük parola uzunluğunu ayarlayın
 collected: Toplanan kontroller
 coverage: Değerlendirme oranı
+detail.Check could not be completed: Kontrol tamamlanamadı
+detail.Directive is not explicitly configured: Yönerge açıkça yapılandırılmamış
+detail.Disabled by scan policy: Tarama politikası tarafından kapatıldı
+detail.Filesystem metadata is unavailable: Dosya sistemi üst verisine erişilemiyor
+detail.Filesystem target is absent: Dosya sistemi hedefi bulunamadı
+detail.Input filtering evidence; rule effectiveness and all families not proven; current namespace only: Gelen
+  trafik filtreleme kanıtı; kuralların etkinliği ve tüm adres aileleri kanıtlanmadı; yalnızca
+  geçerli ad alanı
+detail.Known package/unit names only; custom binaries and inetd definitions not assessed; current environment only: Yalnızca
+  bilinen paket/birim adları; özel programlar ve inetd tanımları değerlendirilmedi; yalnızca
+  geçerli ortam
+detail.Legacy package detected: Eski servis paketi tespit edildi
+detail.Legacy unit detected: Eski servis birimi tespit edildi
+detail.Live namespace values; persistence and host scope unverified: Geçerli ad alanının canlı
+  değerleri; kalıcılık ve ana sistem kapsamı doğrulanmadı
+detail.Local account file cannot be evaluated: Yerel hesap dosyası değerlendirilemiyor
+detail.Local account file is absent: Yerel hesap dosyası bulunamadı
+detail.Local account file is empty: Yerel hesap dosyası boş
+detail.Local file assessment; network accounts excluded: Yerel dosya değerlendirmesi; ağ hesapları
+  hariçtir
+detail.Malformed local account records: Yerel hesap kayıtlarının biçimi bozuk
+detail.Missing or ambiguous PASS_MAX_DAYS: PASS_MAX_DAYS eksik veya belirsiz
+detail.New-account default only; existing accounts excluded: Yalnızca yeni hesap varsayılanı;
+  mevcut hesaplar hariçtir
+detail.No explicit minlen policy: Açıkça tanımlanmış minlen politikası yok
+detail.No verified active supported firewall evidence: Desteklenen etkin güvenlik duvarına
+  ilişkin doğrulanmış kanıt yok
+detail.Owner and mode bits assessed; ACLs and parent paths not assessed: Sahip ve izin bitleri
+  değerlendirildi; ACL ve üst dizinler değerlendirilmedi
+detail.Password default file is absent: Varsayılan parola ayar dosyası bulunamadı
+detail.Password defaults cannot be evaluated: Varsayılan parola ayarları değerlendirilemiyor
+detail.Password quality policy cannot be evaluated: Parola kalitesi politikası değerlendirilemiyor
+detail.Password quality policy is incomplete: Parola kalitesi politikası eksik
+detail.SSH configuration could not be fully evaluated: SSH yapılandırması tam olarak değerlendirilemedi
+detail.SSH configuration is absent: SSH yapılandırması bulunamadı
+detail.SSH configuration is unavailable: SSH yapılandırmasına erişilemiyor
+detail.Scan directory cannot be evaluated: Tarama dizini değerlendirilemiyor
+detail.Scan directory is absent: Tarama dizini bulunamadı
+detail.Static libpwquality policy; PAM activation and overrides not assessed: Statik libpwquality
+  politikası; PAM etkinliği ve geçersiz kılmalar değerlendirilmedi
+detail.Symlink target is not assessed: Sembolik bağlantı hedefi değerlendirilmedi
+detail.TCP ports 21/23 in current namespace; alternate ports not assessed: Geçerli ad alanında
+  TCP 21/23 portları; alternatif portlar değerlendirilmedi
+detail.This check requires Linux: Bu kontrol Linux gerektirir
+detail.Unsupported local account records: Desteklenmeyen yerel hesap kayıtları
 displayed_controls: gösterilen kontroller
+environment.container: konteyner
+environment.detected: tespit edildi
+environment.distribution: dağıtım
+environment.false: hayır
+environment.init: servis yöneticisi
+environment.linux: Linux
+environment.true: evet
+environment.unknown: bilinmiyor
 evidence.assessment: değerlendirme
 evidence.backend: altyapı
 evidence.coverage: tarama kapsamı
