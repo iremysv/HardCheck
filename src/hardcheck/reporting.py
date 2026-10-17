@@ -9,12 +9,12 @@ from hardcheck.models import CheckResult
 from hardcheck.scoring import summarize
 
 
-def json_report(
+def report_data(
     results: Sequence[CheckResult],
     all_results: Sequence[CheckResult],
     minimum_severity: str | None = None,
-) -> str:
-    """Serialize displayed findings without raw detail or command output."""
+) -> dict:
+    """Build the shared public contract without raw detail or command output."""
     findings = []
     for result in results:
         findings.append(
@@ -31,23 +31,32 @@ def json_report(
                 "evidence": [asdict(fact) for fact in result.evidence],
             }
         )
+    return {
+        "schema_version": 1,
+        "hardcheck_version": __version__,
+        "scope": {
+            "basis": "displayed_controls",
+            "min_severity": minimum_severity,
+            "collected_controls": len(all_results),
+            "hidden_controls": len(all_results) - len(results),
+            "host_namespace_verified": False,
+            "limitations": "Bounded observations; not a security guarantee.",
+        },
+        "summary": asdict(summarize(results)),
+        "scan_summary": asdict(summarize(all_results)),
+        "findings": findings,
+    }
+
+
+def json_report(
+    results: Sequence[CheckResult],
+    all_results: Sequence[CheckResult],
+    minimum_severity: str | None = None,
+) -> str:
+    """Serialize the shared report contract as one JSON document."""
     return (
         json.dumps(
-            {
-                "schema_version": 1,
-                "hardcheck_version": __version__,
-                "scope": {
-                    "basis": "displayed_controls",
-                    "min_severity": minimum_severity,
-                    "collected_controls": len(all_results),
-                    "hidden_controls": len(all_results) - len(results),
-                    "host_namespace_verified": False,
-                    "limitations": "Bounded observations; not a security guarantee.",
-                },
-                "summary": asdict(summarize(results)),
-                "scan_summary": asdict(summarize(all_results)),
-                "findings": findings,
-            },
+            report_data(results, all_results, minimum_severity),
             indent=2,
             ensure_ascii=True,
         )

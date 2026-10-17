@@ -98,3 +98,18 @@ def test_output_does_not_follow_symlinks(tmp_path, monkeypatch, capsys):
     assert target.read_text() == "keep"
     assert cli.main(["scan", "--output", str(tmp_path / "missing" / "report")]) == 2
     assert capsys.readouterr().err
+
+
+def test_shared_report_contract_preserves_json_and_input():
+    from hardcheck.reporting import json_report, report_data
+
+    selected = [fake_result(Status.WARN)]
+    collected = selected + [fake_result(Status.FAIL, Severity.LOW)]
+    before = tuple(collected)
+    data = report_data(selected, collected, "high")
+    assert data == json.loads(json_report(selected, collected, "high"))
+    assert data["scope"]["hidden_controls"] == 1
+    assert data["summary"]["score_percent"] is None
+    assert data["scan_summary"]["score_percent"] == 0
+    assert tuple(collected) == before
+    assert "detail" not in data["findings"][0]
