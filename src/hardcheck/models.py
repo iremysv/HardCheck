@@ -3,6 +3,8 @@
 from dataclasses import dataclass
 from enum import StrEnum
 
+from hardcheck.environment import Environment
+
 
 class Status(StrEnum):
     """Possible security check outcomes."""
@@ -22,6 +24,15 @@ class Severity(StrEnum):
     MEDIUM = "medium"
     HIGH = "high"
     CRITICAL = "critical"
+
+
+class ResultReason(StrEnum):
+    """Stable execution reasons, independent of localized human notes."""
+
+    PROBE_RESULT = "probe_result"
+    DISABLED_BY_POLICY = "disabled_by_policy"
+    UNSUPPORTED_PLATFORM = "unsupported_platform"
+    CHECK_ERROR = "check_error"
 
 
 class EvidenceKey(StrEnum):
@@ -94,3 +105,5 @@ class CheckResult:
     rationale: str = ""
     remediation: str = ""
     evidence: tuple[Evidence, ...] = ()
+    reason: ResultReason = ResultReason.PROBE_RESULT
+    environment: Environment | None = None

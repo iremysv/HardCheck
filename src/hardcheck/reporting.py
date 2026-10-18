@@ -5,6 +5,7 @@ from collections.abc import Sequence
 from dataclasses import asdict
 
 from hardcheck import __version__
+from hardcheck.environment import public_environment
 from hardcheck.localization import (
     detail_text,
     evidence_text,
@@ -33,6 +34,9 @@ def report_data(
                 "category": result.category,
                 "severity": result.severity.value,
                 "status": result.status.value,
+                "reason": result.reason.value,
+                "note": detail_text(result, language),
+                "environment": public_environment(result.environment),
                 "expected": result.expected,
                 "rationale": result.rationale,
                 "remediation": result.remediation,
@@ -40,6 +44,11 @@ def report_data(
                 "evidence": [asdict(fact) for fact in result.evidence],
             }
         )
+    environments = []
+    for result in all_results:
+        environment = public_environment(result.environment)
+        if environment is not None and environment not in environments:
+            environments.append(environment)
     return {
         "schema_version": 1,
         "language": language,
@@ -50,6 +59,7 @@ def report_data(
             "collected_controls": len(all_results),
             "hidden_controls": len(all_results) - len(results),
             "host_namespace_verified": False,
+            "environments": environments,
             "limitations": translate("limitations", language),
         },
         "summary": asdict(summarize(results)),

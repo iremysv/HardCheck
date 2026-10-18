@@ -16,6 +16,28 @@ class Environment:
     container: bool | None = None
 
 
+def public_environment(environment: Environment | None) -> dict | None:
+    """Only bounded environment markers may cross the reporting boundary."""
+    if environment is None:
+        return None
+    distribution = environment.distribution
+    if not isinstance(distribution, str) or not re.fullmatch(
+        r"[a-z0-9._-]{1,64}", distribution
+    ):
+        distribution = "unknown"
+    return {
+        "system": environment.system
+        if environment.system in {"Linux", "Darwin", "Windows", "FreeBSD", "OpenBSD", "NetBSD"}
+        else "unknown",
+        "distribution": distribution,
+        "service_manager": environment.service_manager
+        if environment.service_manager in {"systemd", "openrc", "unknown"}
+        else "unknown",
+        "container": "detected" if environment.container is True else "unknown",
+        "host_namespace_verified": False,
+    }
+
+
 def detect_environment(
     root: Path = Path("/"), system: str | None = None
 ) -> Environment:

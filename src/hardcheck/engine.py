@@ -5,7 +5,7 @@ from dataclasses import replace
 from hardcheck.checks.base import BaseCheck
 from hardcheck.config import Policy, Rule
 from hardcheck.environment import Environment, detect_environment
-from hardcheck.models import CheckResult, Status
+from hardcheck.models import CheckResult, ResultReason, Status
 from hardcheck.registry import get_registered_checks
 
 
@@ -21,10 +21,12 @@ def run_checks(
             result = BaseCheck.result(
                 check_class, Status.SKIP, "This check requires Linux"
             )
+            result = replace(result, reason=ResultReason.UNSUPPORTED_PLATFORM)
         elif not rule.enabled:
             result = BaseCheck.result(
                 check_class, Status.SKIP, "Disabled by scan policy"
             )
+            result = replace(result, reason=ResultReason.DISABLED_BY_POLICY)
         else:
             try:
                 result = check_class().run()
@@ -32,6 +34,7 @@ def run_checks(
                 result = BaseCheck.result(
                     check_class, Status.ERROR, "Check could not be completed"
                 )
+                result = replace(result, reason=ResultReason.CHECK_ERROR)
         if rule.severity is not None:
             result = replace(result, severity=rule.severity)
         container = "detected" if environment.container else "unknown"
@@ -41,6 +44,9 @@ def run_checks(
             f"init={environment.service_manager}, container={container}; "
             "host namespace unverified"
         )
-        result = replace(result, detail=f"{result.detail}; {scope}".lstrip("; "))
+        result = replace(
+            result, detail=f"{result.detail}; {scope}".lstrip("; "),
+            environment=environment,
+        )
         results.append(result)
     return results
