@@ -2,6 +2,10 @@
 
 ## Status on 2026-10-18
 
+This section records the initial run. See the subsequent
+[final validation record](final-validation.md) for newer interpreter, browser,
+artifact and CI results; the original artifact hashes below remain historical.
+
 Local packaging and automated acceptance checks passed on macOS with Python
 3.14.3. Step 10 is **partially complete**, not a release approval: Python
 3.11/3.12 execution, remote CI and browser appearance review remain pending.

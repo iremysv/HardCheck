@@ -4,7 +4,7 @@ Python 3.11+ ile geliştirilen, Linux yapılandırmalarını salt okunur inceley
 
 ## Mevcut durum
 
-İlk sekiz aşama tamamlandı: toplam 18 SSH, yerel hesap, dosya sistemi, ağ, çekirdek
+İlk dokuz aşama tamamlandı: toplam 18 SSH, yerel hesap, dosya sistemi, ağ, çekirdek
 ve eski servis kontrolü; tarama motoru ve doğrulanan YAML politikaları. Dağıtım,
 servis yöneticisi ve olası konteyner kapsamı sonuçlarda belirtilir. Kalite kontrolleri
 GitHub Actions üzerinden Python 3.11/3.12 için elle başlatılabilir; commitler
@@ -13,13 +13,16 @@ otomatik çalıştırma tetiklemez.
 Terminal özeti, JSON ve çevrimdışı HTML raporları ile şeffaf puanlama
 kullanılabilir. Rapor dili `--lang en|tr` ile seçilir; inceleme salt okunurdur.
 Ayrıntılar: [7. adım: HTML ve diller](docs/step-07.md).
+[Katkı rehberi](docs/CONTRIBUTING.md), [güvenlik politikası](docs/SECURITY.md) ve
+[yayın hazırlığı](docs/RELEASING.md) mevcut. 10. adımın güncel doğrulamaları ve
+denetim sonrası düzeltmeler: [doğrulama kaydı](docs/final-validation.md).
 
 ## Kurulum ve kullanım
 
 ```sh
 python3 -m venv .venv
 . .venv/bin/activate
-python -m pip install -e '.[dev,security]'
+python -m pip install .
 python -m hardcheck list-checks
 python -m hardcheck scan
 python -m hardcheck scan --lang tr --explain
@@ -75,6 +78,8 @@ Teknik ayrıntılar: [bulgu ve kanıt modeli](docs/findings.md).
 ## Doğrulama
 
 ```sh
+python -m pip install --upgrade 'pip>=26.2,<27'
+python -m pip install -e '.[dev,security]'
 python -m ruff check .
 python -m pytest --cov=hardcheck --cov-report=term-missing
 ```
@@ -87,9 +92,10 @@ python scripts/check_secrets.py
 python scripts/audit_dependencies.py
 ```
 
-Sır taraması yalnızca izlenen dosyaları çevrimdışı inceler; bulgu veya araç hatası
+Sır taraması index içindeki commit’e hazırlanmış dosya içeriklerini çevrimdışı inceler; bulgu veya araç hatası
 başarı sayılmaz. `.gitignore` kapsamındaki bir dosyanın zorla izlenmesi de engellenir.
 Bağımlılık taraması kurulu kesin sürümleri inceler; ağ hatasında temiz sonuç vermez.
+Tarama öncesinde amaçlanan değişiklikleri stage edin; stage edilmemiş içerik taranmaz.
 CI elle başlatılmaya devam eder. Ayrıntılar: [8. adım](docs/step-08.md) ve
 [tehdit modeli](docs/threat-model.md).
 

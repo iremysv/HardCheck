@@ -35,6 +35,17 @@ jobs:
         run: python -m ruff check .
       - name: Tests
         run: python -m pytest --cov=hardcheck --cov-report=term-missing
+      - name: Validate installed wheel and source distribution
+        shell: bash
+        run: |
+          python -m build --no-isolation
+          for artifact in dist/*.whl dist/*.tar.gz; do
+            target="$RUNNER_TEMP/hardcheck-${artifact##*/}"
+            python -m venv "$target"
+            "$target/bin/python" -m pip install --upgrade 'pip>=26.2,<27'
+            "$target/bin/python" -m pip install "$artifact"
+            (cd "$RUNNER_TEMP"; "$target/bin/python" -I "$GITHUB_WORKSPACE/scripts/validate_install.py")
+          done
 
   security:
     runs-on: ubuntu-latest

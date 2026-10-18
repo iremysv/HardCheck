@@ -64,8 +64,20 @@ severity, status, guidance, reference and allowlisted evidence. Raw detail and
 command output are omitted. Numeric mode bits are integers in JSON and octal
 in terminal/HTML explanations. JSON and HTML always include guidance; `--explain` expands
 terminal findings only. No timestamp, username, hostname or private path is added
-to JSON. HTML and terminal may display validated distribution/init/container
-markers and allowlisted scope notes; arbitrary raw detail is not rendered.
+to JSON. Each finding also includes additive `reason`, `note` and `environment`
+fields. `note` is localized through the same allowlist as terminal/HTML, never a
+copy of arbitrary probe detail. `reason` is a stable machine token: `probe_result`,
+`disabled_by_policy`, `unsupported_platform` or `check_error`. Probe-specific
+limitations and unavailable-file explanations are carried by the sanitized note.
+
+An environment contains `system`, bounded `distribution`, allowlisted
+`service_manager`, `container` (`detected` or `unknown`) and
+`host_namespace_verified: false`. Missing environment data is null; lack of
+container markers never means verified bare metal. `scope.environments` retains
+distinct collected environments even when all findings are filtered out. Invalid
+environment markers become `unknown`. These values come from structured engine
+metadata, not by interpreting raw note strings. HTML and terminal also display
+validated markers and allowlisted scope notes; arbitrary raw detail is not rendered.
 
 `language` is an additive field in schema version 1. Field names, control IDs,
 status/severity tokens, evidence tokens and numeric values do not change with

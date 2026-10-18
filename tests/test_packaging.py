@@ -48,6 +48,8 @@ def test_source_archive_contains_tools_tests_and_report_resources(tmp_path):
             ".gitignore", "LICENSE", "MANIFEST.in", "pyproject.toml",
             "README.md", "README.tr.md", "examples/policy.yaml",
             "scripts/check_secrets.py", "scripts/audit_dependencies.py",
+            "scripts/validate_install.py",
+            "scripts/validate_html_layout.py",
             "docs/CONTRIBUTING.md", "docs/SECURITY.md", "docs/RELEASING.md",
         }
         expected.update(

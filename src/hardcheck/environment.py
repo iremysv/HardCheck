@@ -27,7 +27,9 @@ def public_environment(environment: Environment | None) -> dict | None:
         distribution = "unknown"
     return {
         "system": environment.system
-        if environment.system in {"Linux", "Darwin", "Windows", "FreeBSD", "OpenBSD", "NetBSD"}
+        if environment.system in {
+            "Linux", "Darwin", "Windows", "FreeBSD", "OpenBSD", "NetBSD",
+        }
         else "unknown",
         "distribution": distribution,
         "service_manager": environment.service_manager

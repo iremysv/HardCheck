@@ -115,3 +115,64 @@ def test_shared_report_contract_preserves_json_and_input():
     assert data["scan_summary"]["score_percent"] == 0
     assert tuple(collected) == before
     assert "detail" not in data["findings"][0]
+
+
+@pytest.mark.parametrize("language", ["en", "tr"])
+def test_json_preserves_environment_and_execution_reason(language):
+    from hardcheck.config import Policy, Rule
+    from hardcheck.engine import run_checks
+    from hardcheck.environment import Environment
+    from hardcheck.reporting import report_data
+
+    checks = get_registered_checks()
+    policy = Policy({check.check_id: Rule(enabled=False) for check in checks})
+    environment = Environment("Linux", "debian", "systemd", True)
+    results = run_checks(policy, environment)
+    data = report_data(results, results, language=language)
+    finding = data["findings"][0]
+    assert finding["reason"] == "disabled_by_policy"
+    assert finding["note"]
+    assert finding["environment"] == {
+        "system": "Linux", "distribution": "debian", "service_manager": "systemd",
+        "container": "detected", "host_namespace_verified": False,
+    }
+    assert data["scope"]["environments"] == [finding["environment"]]
+    hidden = report_data([], results, "critical", language)
+    assert hidden["scope"]["environments"] == data["scope"]["environments"]
+    assert hidden["findings"] == []
+    unsupported = run_checks(environment=Environment("Darwin"))
+    other = report_data(unsupported, unsupported, language=language)
+    assert other["findings"][0]["reason"] == "unsupported_platform"
+    assert other["findings"][0]["note"] != finding["note"]
+
+
+def test_json_reason_and_environment_do_not_expose_untrusted_detail():
+    from hardcheck.environment import Environment
+    from hardcheck.reporting import report_data
+
+    finding = replace(
+        fake_result(Status.WARN),
+        environment=Environment("private-secret", "<private-secret>", "private-secret"),
+    )
+    data = report_data([finding], [finding])
+    assert "private-secret" not in json.dumps(data)
+    assert data["findings"][0]["reason"] == "probe_result"
+    assert data["findings"][0]["environment"]["distribution"] == "unknown"
+    assert data["findings"][0]["environment"]["container"] == "unknown"
+
+
+def test_json_preserves_sanitized_check_error_reason(monkeypatch):
+    from hardcheck.engine import run_checks
+    from hardcheck.environment import Environment
+    from hardcheck.reporting import report_data
+
+    def fail(self):
+        raise RuntimeError("private-exception-detail")
+
+    for check in get_registered_checks():
+        monkeypatch.setattr(check, "__init__", fail)
+    results = run_checks(environment=Environment("Linux", "debian"))
+    data = report_data(results, results)
+    assert all(finding["reason"] == "check_error" for finding in data["findings"])
+    assert all(finding["status"] == "ERROR" for finding in data["findings"])
+    assert "private-exception-detail" not in json.dumps(data)

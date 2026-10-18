@@ -86,9 +86,10 @@ CSS and template successfully rendered both languages with all 18 controls.
 Checks were run locally on Python 3.12; Python 3.11 runtime execution was not
 available in this environment. The existing manual CI matrix remains unchanged.
 
-Browser screenshot validation could not run because the headless browser download
+In the original step-7 run, browser screenshot validation could not run because the headless browser download
 failed in the environment. HTML structure and security are tested, but desktop,
-mobile and print appearance still need a manual browser review. The CLI does not
+mobile and print appearance were pending. Newer Chromium screenshots and
+print-media checks are recorded in [final validation](final-validation.md). The CLI does not
 automatically open a browser. This is a static report, not a hosted web application.
 
 As before, a high score does not certify host security. The scope is bounded and

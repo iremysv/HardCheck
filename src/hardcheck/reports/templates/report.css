@@ -6,17 +6,21 @@ header { border-top: 5px solid #2563eb; padding: 26px 30px; background: white; b
 h1 { margin: 0 0 6px; font-size: 2rem; letter-spacing: -.04em; }
 h2 { margin: 32px 0 14px; font-size: 1.35rem; }
 h3 { margin: 0; font-size: 1.15rem; }
+h1, h2, h3, th, td, .metric dt, .metric dd { overflow-wrap: anywhere; }
 p { margin: 8px 0; }
 .muted, footer { color: #475569; }
 .notice { background: #fffbeb; border-left: 4px solid #b45309; padding: 14px 20px; margin: 20px 0; }
-.metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin: 20px 0; }
+.metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; margin: 20px 0; }
 .metric { background: white; border: 1px solid #cbd5e1; border-radius: 8px; padding: 18px; }
 .metric dt { color: #475569; font-size: .9rem; }
-.metric dd { margin: 5px 0 0; font-size: 1.7rem; font-weight: 700; }
+.metric dd { margin: 5px 0 0; font-size: clamp(1rem, 2.5vw, 1.7rem); font-weight: 700; }
 .statuses { display: flex; flex-wrap: wrap; gap: 12px; padding: 0; list-style: none; }
 .statuses li { background: white; padding: 6px 12px; border: 1px solid #cbd5e1; border-radius: 6px; }
 .table-wrap { overflow-x: auto; }
-table { width: 100%; border-collapse: collapse; background: white; font-size: .95rem; }
+table { width: 100%; min-width: 600px; table-layout: fixed; border-collapse: collapse; background: white; font-size: .95rem; }
+th:first-child { width: 90px; }
+th:nth-child(3) { width: 150px; }
+th:nth-child(4) { width: 100px; }
 caption { text-align: left; color: #475569; padding: 8px 0; }
 th, td { padding: 12px; border-bottom: 1px solid #e2e8f0; text-align: left; vertical-align: top; }
 th { color: #334155; background: #e2e8f0; }
@@ -32,5 +36,5 @@ th { color: #334155; background: #e2e8f0; }
 a { color: #1d4ed8; text-underline-offset: 3px; overflow-wrap: anywhere; }
 a:focus-visible { outline: 3px solid #2563eb; outline-offset: 3px; }
 footer { margin-top: 30px; font-size: .9rem; }
-@media (max-width: 700px) { .metrics { grid-template-columns: repeat(2, 1fr); } main { padding: 20px 14px; } header { padding: 22px; } h1 { font-size: 1.65rem; } }
-@media print { :root { background: white; } main { padding: 0; } .metric, .finding { box-shadow: none; } a { color: inherit; } }
+@media (max-width: 700px) { .metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); } main { padding: 20px 14px; } header { padding: 22px; } h1 { font-size: 1.65rem; } }
+@media print { :root { background: white; } main { padding: 0; } .table-wrap { overflow: visible; } table { min-width: 0; } .metric, .finding { box-shadow: none; } a { color: inherit; } }

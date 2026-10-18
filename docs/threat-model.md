@@ -84,3 +84,7 @@ the updated remote workflow was not dispatched during development. Browser
 appearance validation from step 7 remains unverified in this environment.
 Review [step 8 validation](step-08.md), [reporting](reporting.md) and the individual
 check scope documents before interpreting results.
+
+These statements describe the step-8 evidence. Newer validation and resolved audit
+findings are recorded in [final validation](final-validation.md), including exact
+scope and the distinction between a local working tree and a remote commit.

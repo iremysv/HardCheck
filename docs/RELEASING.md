@@ -43,6 +43,22 @@ tests from the extracted archive with developer/security tools installed, using
 `PYTHONPATH=src python -m pytest`, to catch missing source-only files. The secret
 gate itself requires a Git checkout; a source archive has no index.
 
+The reusable `scripts/validate_install.py` performs offline acceptance on an
+installed artifact. It refuses source-checkout imports, runs the installed entry
+point, and checks both languages, three formats, all statuses, policy overrides,
+filtered errors and private output. It uses synthetic probes only. Use each fresh
+environment's interpreter with isolated imports, from outside the checkout:
+
+```sh
+/path/to/fresh-venv/bin/python -I /path/to/HardCheck/scripts/validate_install.py
+```
+
+Optional `--reports /path/to/new-directory` exports synthetic full/empty HTML
+examples for browser review. The directory must not already exist and its parent
+must be trusted. The current manual quality workflow runs this tool against both
+wheel and source installations on Python 3.11 and 3.12. That workflow must be
+committed and pushed before remote runs can test its updated behavior.
+
 Inspect the wheel and source archive for license/readme metadata, all application
 modules, both language catalogs and HTML template/CSS resources. Exclude private
 files and local reports. Install the wheel into a fresh environment outside the
@@ -62,6 +78,15 @@ the findings.
 Open synthetic HTML reports in a browser at desktop/mobile widths and print
 preview. Check Turkish text, long guidance, status labels, empty results and the
 absence of external resource requests. Record what was actually inspected.
+
+The optional Playwright tool automates geometry, offline-resource and language
+checks and exports screenshots of full/empty/long synthetic reports:
+
+```sh
+PYTHONPATH=src python scripts/validate_html_layout.py --output /path/to/new-directory
+```
+
+See [current validation](final-validation.md) for optional browser setup and scope.
 
 ## Release decision
 

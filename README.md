@@ -4,7 +4,7 @@ Read-only Linux security auditing CLI, implemented in Python 3.11+.
 
 ## Current status
 
-The first eight milestones are implemented: eighteen SSH, local account,
+The first nine milestones are implemented: eighteen SSH, local account,
 filesystem, network, kernel and legacy-service checks; an isolated scan engine,
 strict YAML policies and bounded read-only queries. Environment markers label
 Linux distribution, init system and possible container scope. Quality checks can be started
@@ -13,15 +13,17 @@ A separate manual security job audits source, tracked secrets and dependencies.
 
 Terminal summaries, transparent scoring, versioned JSON and offline HTML reports
 are available in English and Turkish (`--lang en|tr`). The inspection remains read-only.
-See [reporting, scoring and exit codes](docs/reporting.md) and
-[step 7: HTML and languages](docs/step-07.md).
+See [reporting, scoring and exit codes](docs/reporting.md),
+[contributing](docs/CONTRIBUTING.md), [security policy](docs/SECURITY.md) and
+[release preparation](docs/RELEASING.md). Step 10 validation and audit fixes are
+recorded in [the current validation record](docs/final-validation.md).
 
 ## Install and run
 
 ```sh
 python3 -m venv .venv
 . .venv/bin/activate
-python -m pip install -e '.[dev,security]'
+python -m pip install .
 python -m hardcheck --version
 python -m hardcheck list-checks
 python -m hardcheck scan
@@ -81,6 +83,8 @@ exit status; internal ERROR always returns 2, even if filtered from display.
 ## Development
 
 ```sh
+python -m pip install --upgrade 'pip>=26.2,<27'
+python -m pip install -e '.[dev,security]'
 python -m ruff check .
 python -m pytest --cov=hardcheck --cov-report=term-missing
 ```
@@ -94,6 +98,7 @@ python scripts/audit_dependencies.py
 ```
 
 Tests use temporary files and injected failures rather than changing host settings.
-Never commit environments, private keys, credentials or local audit data.
+Stage intended changes before running the secret gate; it scans exact staged blobs,
+not unstaged edits. Never commit environments, private keys, credentials or local audit data.
 The project is under active development; its current scope is not a complete
 system security assessment. License: MIT.
