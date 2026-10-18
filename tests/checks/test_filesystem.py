@@ -1,6 +1,8 @@
 """Filesystem mode and ownership tests use temporary fixtures only."""
 
 import os
+import stat
+from pathlib import Path
 
 import pytest
 
@@ -22,7 +24,6 @@ from hardcheck.models import Status
     (ShadowPermissionsCheck, 0o000, Status.PASS),
     (ShadowPermissionsCheck, 0o604, Status.FAIL),
     (ShadowPermissionsCheck, 0o620, Status.FAIL),
-    (ShadowPermissionsCheck, 0o4600, Status.FAIL),
     (ShadowPermissionsCheck, 0o644, Status.FAIL),
 ])
 def test_regular_file_permissions(tmp_path, check, mode, expected):
@@ -33,6 +34,20 @@ def test_regular_file_permissions(tmp_path, check, mode, expected):
     assert check(path, os.getuid()).run().status == expected
     after = path.stat()
     assert (before.st_mode, before.st_mtime_ns) == (after.st_mode, after.st_mtime_ns)
+
+
+@pytest.mark.parametrize("special", [stat.S_ISUID, stat.S_ISGID, stat.S_ISVTX])
+@pytest.mark.parametrize("check,base_mode", [
+    (PasswdPermissionsCheck, 0o644), (ShadowPermissionsCheck, 0o600),
+])
+def test_special_permission_bits_fail(monkeypatch, check, base_mode, special):
+    # Some temporary filesystems strip setuid bits on chmod. Inject metadata so
+    # the security assertion is exercised independently of the host mount policy.
+    info = os.stat_result(
+        (stat.S_IFREG | base_mode | special, 0, 0, 1, 0, 0, 0, 0, 0, 0)
+    )
+    monkeypatch.setattr(Path, "lstat", lambda self: info)
+    assert check(Path("synthetic-target")).run().status == Status.FAIL
 
 
 @pytest.mark.parametrize(("mode", "status"), [
