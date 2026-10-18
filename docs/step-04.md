@@ -25,7 +25,10 @@ The detector is not a container escape, privilege or host-scope verification too
 - NET-002: both /proc/net/tcp and tcp6 must be readable and parseable; TCP LISTEN
   records on ports 21 or 23 produce FAIL, including loopback listeners. Missing
   tables yield SKIP, malformed records WARN, and known forbidden listeners FAIL
-  even with partial visibility. UDP, alternate ports, protocol identification,
+  even with partial visibility. Malformed records mark coverage as uncertain but
+  do not stop inspection of later records under a valid table header; a forbidden
+  listener before or after a malformed record still yields FAIL.
+  UDP, alternate ports, protocol identification,
   remote hosts, other namespaces and hidden/unmounted proc data are not assessed.
 
 All proc results are current-namespace observations, not host-wide or persistent
@@ -50,7 +53,11 @@ package names, including unpacked Debian packages. systemctl installed and loade
 unit inventories are checked for known telnet/rsh/rlogin/rexec names, including
 templates and sockets. Installed disabled legacy units still fail this policy.
 PASS requires successful package inventory and both systemd unit inventories with
-no known legacy evidence. Partial/unsupported observations yield WARN; unavailable
+no known legacy evidence. Malformed individual records do not stop inspection of
+later records in that inventory. Any recognized forbidden package/unit yields
+FAIL regardless of record order; malformed inventories without such evidence
+remain incomplete and cannot establish absence. Partial/unsupported observations
+yield WARN; unavailable
 queries yield SKIP. Known forbidden evidence yields FAIL despite partial coverage.
 OpenRC/inetd/xinetd configurations, renamed or manually installed programs,
 containers without a reachable service manager, custom units and external package

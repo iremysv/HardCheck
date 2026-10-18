@@ -39,3 +39,34 @@ def test_partial_and_malformed_tables(tmp_path):
     assert LegacyListenerCheck(tmp_path).run().status == Status.WARN
     (tmp_path / "tcp").write_text(HEADER)
     assert LegacyListenerCheck(tmp_path).run().status == Status.SKIP
+
+
+@pytest.mark.parametrize("family,width", [("tcp", 8), ("tcp6", 32)])
+@pytest.mark.parametrize("port", [21, 23])
+@pytest.mark.parametrize("bad_first", [True, False])
+@pytest.mark.parametrize("invalid_field", [None, 1, 2, 3])
+def test_malformed_record_does_not_hide_forbidden_listener(
+    tmp_path, family, width, port, bad_first, invalid_field
+):
+    for name in ("tcp", "tcp6"):
+        (tmp_path / name).write_text(HEADER)
+    malformed = "malformed\n"
+    if invalid_field is not None:
+        fields = row(22, width).split()
+        fields[invalid_field] = "invalid"
+        malformed = " ".join(fields) + "\n"
+    records = [malformed, row(port, width)]
+    if not bad_first:
+        records.reverse()
+    (tmp_path / family).write_text(HEADER + "".join(records))
+    assert LegacyListenerCheck(tmp_path).run().status == Status.FAIL
+
+
+@pytest.mark.parametrize("family,width", [("tcp", 8), ("tcp6", 32)])
+def test_malformed_record_with_only_allowed_listener_stays_uncertain(
+    tmp_path, family, width
+):
+    for name in ("tcp", "tcp6"):
+        (tmp_path / name).write_text(HEADER)
+    (tmp_path / family).write_text(HEADER + "malformed\n" + row(22, width))
+    assert LegacyListenerCheck(tmp_path).run().status == Status.WARN

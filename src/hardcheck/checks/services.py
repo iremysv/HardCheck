@@ -41,6 +41,35 @@ LEGACY_UNITS = {
 }
 
 
+def legacy_package(line: str, query: str) -> bool:
+    """Parse one package record without exposing names in public evidence."""
+    if query == "packages-deb":
+        name, state = line.split("\t")
+        name = name.split(":", 1)[0]
+        if state not in {
+            "installed", "not-installed", "config-files", "unpacked",
+            "half-installed", "half-configured", "triggers-awaited", "triggers-pending",
+        }:
+            raise ValueError("Invalid package state")
+        # Unconfigured legacy packages remain a finding.
+        installed = state not in {"not-installed", "config-files"}
+    else:
+        name = line
+        installed = True
+    if not re.fullmatch(r"[A-Za-z0-9.+_-]+", name):
+        raise ValueError("Invalid package name")
+    return name in LEGACY_PACKAGES and installed
+
+
+def legacy_unit(line: str) -> bool:
+    """Parse one unit record, including template and socket names."""
+    fields = line.split()
+    if len(fields) < 2 or "." not in fields[0]:
+        raise ValueError("Invalid unit record")
+    name = fields[0].rsplit(".", 1)[0].split("@", 1)[0]
+    return name in LEGACY_UNITS
+
+
 class LegacyServiceCheck(BaseCheck):
     check_id = "SVC-001"
     category = "services"
@@ -58,62 +87,31 @@ class LegacyServiceCheck(BaseCheck):
             if response.state != "done" or response.code != 0:
                 uncertain = True
                 continue
-            try:
-                lines = response.output.splitlines()
-                if query.startswith("packages-"):
-                    if not lines:
-                        raise ValueError
-                    for line in lines:
-                        if query == "packages-deb":
-                            name, state = line.split("\t")
-                            name = name.split(":", 1)[0]
-                            installed = state == "installed"
-                            if state not in {
-                                "installed",
-                                "not-installed",
-                                "config-files",
-                                "unpacked",
-                                "half-installed",
-                                "half-configured",
-                                "triggers-awaited",
-                                "triggers-pending",
-                            }:
-                                raise ValueError
-                            # Unconfigured legacy packages remain a finding.
-                            installed = state not in {"not-installed", "config-files"}
-                        else:
-                            name = line
-                            installed = True
-                        if not re.fullmatch(r"[A-Za-z0-9.+_-]+", name):
-                            raise ValueError
-                        if name in LEGACY_PACKAGES and installed:
-                            return self.result(
-                                Status.FAIL,
-                                "Legacy package detected",
-                                evidence=(
-                                    Evidence(
-                                        EvidenceKey.PACKAGE, EvidenceValue.PRESENT
-                                    ),
-                                ),
-                            )
-                    package_observed = True
-                else:
-                    for line in lines:
-                        fields = line.split()
-                        if len(fields) < 2 or "." not in fields[0]:
-                            raise ValueError
-                        name = fields[0].rsplit(".", 1)[0].split("@", 1)[0]
-                        if name in LEGACY_UNITS:
-                            return self.result(
-                                Status.FAIL,
-                                "Legacy unit detected",
-                                evidence=(
-                                    Evidence(EvidenceKey.UNIT, EvidenceValue.PRESENT),
-                                ),
-                            )
-                    units_observed += 1
-            except ValueError:
+            packages = query.startswith("packages-")
+            lines = response.output.splitlines()
+            valid_inventory = bool(lines) if packages else True
+            for line in lines:
+                try:
+                    found = (
+                        legacy_package(line, query) if packages else legacy_unit(line)
+                    )
+                except ValueError:
+                    valid_inventory = False
+                    continue
+                if found:
+                    key = EvidenceKey.PACKAGE if packages else EvidenceKey.UNIT
+                    return self.result(
+                        Status.FAIL,
+                        "Legacy package detected"
+                        if packages else "Legacy unit detected",
+                        evidence=(Evidence(key, EvidenceValue.PRESENT),),
+                    )
+            if not valid_inventory:
                 uncertain = True
+            elif packages:
+                package_observed = True
+            else:
+                units_observed += 1
         complete = package_observed and units_observed == 2 and not uncertain
         status = Status.PASS if complete else Status.WARN
         if not package_observed and not units_observed and not uncertain:

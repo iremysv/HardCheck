@@ -22,7 +22,6 @@ class LegacyListenerCheck(BaseCheck):
         self.root = root
 
     def run(self) -> CheckResult:
-        counts = {21: 0, 23: 0}
         failed = False
         unavailable = False
         malformed = False
@@ -31,7 +30,14 @@ class LegacyListenerCheck(BaseCheck):
                 lines = read_regular_text(self.root / name).splitlines()
                 if not lines or "local_address" not in lines[0] or "st" not in lines[0]:
                     raise ValueError("Invalid TCP header")
-                for line in lines[1:]:
+            except (OSError, UnicodeError):
+                unavailable = True
+                continue
+            except ValueError:
+                malformed = True
+                continue
+            for line in lines[1:]:
+                try:
                     fields = line.split()
                     if len(fields) < 10:
                         raise ValueError("Invalid TCP record")
@@ -46,11 +52,10 @@ class LegacyListenerCheck(BaseCheck):
                         port = int(fields[1].split(":")[1], 16)
                         if port in {21, 23}:
                             failed = True
-                            counts[port] += 1
-            except (OSError, UnicodeError):
-                unavailable = True
-            except ValueError:
-                malformed = True
+                except ValueError:
+                    # Continue within this table so known forbidden listeners
+                    # cannot be hidden by an earlier malformed record.
+                    malformed = True
         status = (
             Status.FAIL
             if failed
