@@ -4,7 +4,7 @@ Python 3.11+ ile geliştirilen, Linux yapılandırmalarını salt okunur inceley
 
 ## Mevcut durum
 
-İlk yedi aşama tamamlandı: toplam 18 SSH, yerel hesap, dosya sistemi, ağ, çekirdek
+İlk sekiz aşama tamamlandı: toplam 18 SSH, yerel hesap, dosya sistemi, ağ, çekirdek
 ve eski servis kontrolü; tarama motoru ve doğrulanan YAML politikaları. Dağıtım,
 servis yöneticisi ve olası konteyner kapsamı sonuçlarda belirtilir. Kalite kontrolleri
 GitHub Actions üzerinden Python 3.11/3.12 için elle başlatılabilir; commitler
@@ -19,7 +19,7 @@ Ayrıntılar: [7. adım: HTML ve diller](docs/step-07.md).
 ```sh
 python3 -m venv .venv
 . .venv/bin/activate
-python -m pip install -e '.[dev]'
+python -m pip install -e '.[dev,security]'
 python -m hardcheck list-checks
 python -m hardcheck scan
 python -m hardcheck scan --lang tr --explain
@@ -78,6 +78,20 @@ Teknik ayrıntılar: [bulgu ve kanıt modeli](docs/findings.md).
 python -m ruff check .
 python -m pytest --cov=hardcheck --cov-report=term-missing
 ```
+
+## Güvenlik doğrulaması
+
+```sh
+python -m bandit -c pyproject.toml -r src scripts
+python scripts/check_secrets.py
+python scripts/audit_dependencies.py
+```
+
+Sır taraması yalnızca izlenen dosyaları çevrimdışı inceler; bulgu veya araç hatası
+başarı sayılmaz. `.gitignore` kapsamındaki bir dosyanın zorla izlenmesi de engellenir.
+Bağımlılık taraması kurulu kesin sürümleri inceler; ağ hatasında temiz sonuç vermez.
+CI elle başlatılmaya devam eder. Ayrıntılar: [8. adım](docs/step-08.md) ve
+[tehdit modeli](docs/threat-model.md).
 
 Testler geçici dosyalar kullanır; sistem ayarlarını değiştirmez. Sanal ortamları,
 anahtarları, kimlik bilgilerini ve yerel tarama verilerini repoya eklemeyin.

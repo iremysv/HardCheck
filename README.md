@@ -4,11 +4,12 @@ Read-only Linux security auditing CLI, implemented in Python 3.11+.
 
 ## Current status
 
-The first seven milestones are implemented: eighteen SSH, local account,
+The first eight milestones are implemented: eighteen SSH, local account,
 filesystem, network, kernel and legacy-service checks; an isolated scan engine,
 strict YAML policies and bounded read-only queries. Environment markers label
 Linux distribution, init system and possible container scope. Quality checks can be started
 manually from GitHub Actions on Python 3.11 and 3.12; commits do not trigger them.
+A separate manual security job audits source, tracked secrets and dependencies.
 
 Terminal summaries, transparent scoring, versioned JSON and offline HTML reports
 are available in English and Turkish (`--lang en|tr`). The inspection remains read-only.
@@ -20,7 +21,7 @@ See [reporting, scoring and exit codes](docs/reporting.md) and
 ```sh
 python3 -m venv .venv
 . .venv/bin/activate
-python -m pip install -e '.[dev]'
+python -m pip install -e '.[dev,security]'
 python -m hardcheck --version
 python -m hardcheck list-checks
 python -m hardcheck scan
@@ -82,6 +83,14 @@ exit status; internal ERROR always returns 2, even if filtered from display.
 ```sh
 python -m ruff check .
 python -m pytest --cov=hardcheck --cov-report=term-missing
+```
+
+Security checks: [step 8](docs/step-08.md) and [threat model](docs/threat-model.md).
+
+```sh
+python -m bandit -c pyproject.toml -r src scripts
+python scripts/check_secrets.py
+python scripts/audit_dependencies.py
 ```
 
 Tests use temporary files and injected failures rather than changing host settings.
