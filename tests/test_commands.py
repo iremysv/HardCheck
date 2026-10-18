@@ -60,3 +60,50 @@ def test_query_start_failure_is_sanitized(monkeypatch):
     result = commands.run_query("nft")
     assert result.state == "error"
     assert not result.output
+
+
+def test_query_does_not_inherit_private_environment(monkeypatch):
+    monkeypatch.setenv("PRIVATE_FIXTURE_VALUE", "fixture")
+    script = (
+        "import os; print(os.environ.get('PRIVATE_FIXTURE_VALUE', 'absent')); "
+        "print(os.environ['LC_ALL']); print(os.getcwd())"
+    )
+    monkeypatch.setattr(commands, "QUERIES", {"fixture": ("python", ("-c", script))})
+    monkeypatch.setattr(commands, "resolve_binary", lambda _: Path(sys.executable))
+    result = commands.run_query("fixture")
+    assert result.state == "done"
+    assert result.output.splitlines() == ["absent", "C", "/"]
+
+
+def test_pipe_inheriting_descendant_is_bounded_and_group_is_killed(monkeypatch):
+    import os
+    import signal
+
+    if not hasattr(os, "fork"):
+        pytest.skip("POSIX process-group behavior")
+    script = (
+        "import os,time; child=os.fork(); time.sleep(5) if child == 0 else os._exit(0)"
+    )
+    monkeypatch.setattr(commands, "QUERIES", {"fixture": ("python", ("-c", script))})
+    monkeypatch.setattr(commands, "resolve_binary", lambda _: Path(sys.executable))
+    original = os.killpg
+    signals = []
+
+    def kill_group(pid, value):
+        signals.append(value)
+        return original(pid, value)
+
+    monkeypatch.setattr(commands.os, "killpg", kill_group)
+    result = commands.run_query("fixture", timeout=0.1)
+    assert result.state == "error"
+    assert result.output == ""
+    assert signal.SIGKILL in signals
+
+
+def test_invalid_query_output_is_not_replaced_into_valid_text(monkeypatch):
+    script = "import os; os.write(1, bytes([255]))"
+    monkeypatch.setattr(commands, "QUERIES", {"fixture": ("python", ("-c", script))})
+    monkeypatch.setattr(commands, "resolve_binary", lambda _: Path(sys.executable))
+    result = commands.run_query("fixture")
+    assert result.state == "error"
+    assert result.output == ""

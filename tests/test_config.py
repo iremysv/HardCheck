@@ -145,3 +145,15 @@ def isolate_ssh_engine_tests(monkeypatch):
 
     checks = tuple(c for c in get_registered_checks() if c.check_id.startswith("SSH-"))
     monkeypatch.setattr(engine, "get_registered_checks", lambda: checks)
+
+
+def test_safe_loader_never_executes_python_constructor(tmp_path, monkeypatch):
+    import os
+
+    called = []
+    monkeypatch.setattr(os, "system", lambda command: called.append(command))
+    path = tmp_path / "unsafe.yaml"
+    path.write_text("!!python/object/apply:os.system ['synthetic-marker']")
+    with pytest.raises(ConfigError):
+        load_policy(path)
+    assert called == []
