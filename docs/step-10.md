@@ -123,3 +123,29 @@ all 317 tests passed after correction.
 
 These pending checks prevent describing this milestone as fully verified or the
 package as release-ready. The results above do not certify a Linux host's security.
+
+## Packaging correction after the code audit (2026-10-18)
+
+The original archives above installed successfully but did not include `scripts/`
+or the complete test tree. Running their security-tool test failed to import the
+scripts module. Those earlier installation checks did not establish that the
+source distribution could run its own full test suite.
+
+`MANIFEST.in` now explicitly includes development scripts, every Python test,
+documentation, examples, workflow files and `.gitignore`. A packaging regression
+test builds an sdist and then its wheel offline in a temporary copy. It checks
+required source files, tool imports, language/template assets, license metadata
+and exclusion of synthetic environment/local-report files.
+
+The license declaration now uses SPDX `MIT` and an explicit license file, with
+setuptools >=77 as the matching build requirement. The development extra includes
+build and setuptools so this regression test does not need a networked build
+environment. The earlier license-table deprecation warning no longer occurs.
+
+Validation on Python 3.14.3 passed 349 tests in the checkout and 349 tests from
+the freshly built/extracted source archive, including its packaging regression
+test. Checkout coverage remained 97%; Ruff and Bandit passed. The corrected
+artifacts were built under `/private/tmp/hardcheck-packaging-fix/dist`; the hashes
+listed earlier describe the original artifacts, not these corrected builds.
+No package was published and no tag was created. Python 3.11/3.12, remote CI and
+browser appearance verification remain pending.

@@ -29,6 +29,20 @@ python -m pip install build
 python -m build
 ```
 
+The development extra includes the offline build-test tools. The packaging
+regression test builds both artifacts in a temporary copy and verifies source
+archive completeness, packaged resources and SPDX license metadata:
+
+```sh
+python -m pytest tests/test_packaging.py
+```
+
+The source archive must contain the scripts imported by its tests, the complete
+test tree, `.gitignore`, examples and development documentation. Run its full
+tests from the extracted archive with developer/security tools installed, using
+`PYTHONPATH=src python -m pytest`, to catch missing source-only files. The secret
+gate itself requires a Git checkout; a source archive has no index.
+
 Inspect the wheel and source archive for license/readme metadata, all application
 modules, both language catalogs and HTML template/CSS resources. Exclude private
 files and local reports. Install the wheel into a fresh environment outside the

@@ -1,0 +1,7 @@
+include .editorconfig .gitignore LICENSE README.md README.tr.md pyproject.toml
+recursive-include .github/workflows *.yml
+recursive-include docs *.md
+recursive-include examples *.yaml
+recursive-include scripts *.py
+recursive-include tests *.py
+global-exclude .DS_Store *.py[cod]
