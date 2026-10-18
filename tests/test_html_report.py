@@ -78,7 +78,8 @@ def test_all_dynamic_html_text_is_escaped():
         "data:text/html,hi",
         "//example.org",
         "http://example.org",
-        "https://user:pass@example.org",
+        # Deliberately invalid URL credentials exercise link rejection.
+        "https://user:pass@example.org",  # pragma: allowlist secret
         "https://example.org\n.evil",
         "https://[invalid",
         "https://example.org\\@evil.org",

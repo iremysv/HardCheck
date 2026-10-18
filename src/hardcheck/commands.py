@@ -4,7 +4,9 @@ import os
 import selectors
 import signal
 import stat
-import subprocess
+
+# Fixed read-only argv; no shell or PATH lookup.
+import subprocess  # nosec B404
 import time
 from dataclasses import dataclass
 from pathlib import Path
@@ -57,7 +59,8 @@ def run_query(name: str, *, timeout: float = 3, limit: int = 1048576) -> Command
     if path is None:
         return CommandResult("missing")
     try:
-        process = subprocess.Popen(
+        # Only QUERIES supplies arguments; configuration never supplies commands.
+        process = subprocess.Popen(  # nosec B603
             [str(path), *arguments],
             stdin=subprocess.DEVNULL,
             stdout=subprocess.PIPE,

@@ -7,7 +7,8 @@ from enum import StrEnum
 class Status(StrEnum):
     """Possible security check outcomes."""
 
-    PASS = "PASS"
+    # This public outcome token is not a credential.
+    PASS = "PASS"  # nosec B105
     FAIL = "FAIL"
     WARN = "WARN"
     SKIP = "SKIP"

@@ -14,7 +14,8 @@ from hardcheck.registry import get_registered_checks
 @pytest.fixture
 def fake_system(tmp_path, monkeypatch):
     fixtures = {
-        "passwd": "root:x:0:0::/root:/bin/sh\n",
+        # Synthetic account record; x is a placeholder, not a password.
+        "passwd": "root:x:0:0::/root:/bin/sh\n",  # pragma: allowlist secret
         "shadow": "root:!:20000:0:90:7:::\n",
         "login.defs": "PASS_MAX_DAYS 90\n",
         "pwquality.conf": "minlen = 12\n",

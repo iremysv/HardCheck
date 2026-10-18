@@ -62,7 +62,12 @@ class Policy:
 def load_policy(path: Path) -> Policy:
     """Load schema version 1 with bounded size and strict field validation."""
     try:
-        document = yaml.load(read_regular_text(path, 65536), Loader=PolicyLoader)
+        # PolicyLoader inherits SafeLoader and rejects aliases/duplicate keys.
+        loader = PolicyLoader(read_regular_text(path, 65536))
+        try:
+            document = loader.get_single_data()
+        finally:
+            loader.dispose()
     except ConfigError:
         raise
     except (OSError, UnicodeError, ValueError, yaml.YAMLError, RecursionError) as exc:

@@ -85,7 +85,12 @@ class TmpStickyCheck(MetadataCheck):
     check_id = "FS-003"
     reference = "https://man7.org/linux/man-pages/man2/chmod.2.html"
 
-    def __init__(self, path: Path = Path("/tmp"), expected_uid: int = 0):
+    # Inspect the existing directory with lstat; never create temporary files.
+    def __init__(
+        self,
+        path: Path = Path("/tmp"),  # nosec B108
+        expected_uid: int = 0,
+    ):
         super().__init__(path, expected_uid)
 
     def evaluate(self, info) -> bool:
