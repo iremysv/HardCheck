@@ -29,6 +29,17 @@ def tracked_files(root: Path) -> list[str]:
     paths = sorted(set(path for path in paths if path))
     if not paths:
         raise ScanError("No tracked files")
+    # Ignore rules also guard the index: git add -f must not bypass local-data policy.
+    ignored = subprocess.run(  # nosec B603
+        [executable, "check-ignore", "--no-index", "--stdin", "-z"],
+        cwd=root,
+        input=("\0".join(paths) + "\0").encode("utf-8"),
+        capture_output=True,
+        check=False,
+        timeout=15,
+    )
+    if ignored.returncode not in (0, 1) or ignored.stdout:
+        raise ScanError("Index contains ignored files or ignore check failed")
     for path in paths:
         relative = Path(path)
         if relative.is_absolute() or ".." in relative.parts:

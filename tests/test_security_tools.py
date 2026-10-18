@@ -173,3 +173,38 @@ def test_audit_timeout_has_sanitized_error(monkeypatch, capsys):
     captured = capsys.readouterr()
     assert "could not complete" in captured.err
     assert "private" not in captured.err
+
+
+@pytest.mark.parametrize(
+    "relative",
+    [
+        ".env",
+        ".venv/config.txt",
+        "venv/config.txt",
+        "scan-output/report.html",
+        "__pycache__/fixture.pyc",
+    ],
+)
+def test_force_added_local_files_cannot_bypass_ignore_policy(repository, relative):
+    ignore = Path(__file__).resolve().parents[1] / ".gitignore"
+    (repository / ".gitignore").write_bytes(ignore.read_bytes())
+    path = repository / relative
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text("fixture")
+    subprocess.run(
+        [shutil.which("git"), "add", "-f", "--", relative, ".gitignore"],
+        cwd=repository,
+        check=True,
+    )
+    with pytest.raises(check_secrets.ScanError, match="ignored files"):
+        check_secrets.tracked_files(repository)
+
+
+def test_report_source_directory_remains_allowed(repository):
+    ignore = Path(__file__).resolve().parents[1] / ".gitignore"
+    (repository / ".gitignore").write_bytes(ignore.read_bytes())
+    path = repository / "src/hardcheck/reports/template.txt"
+    path.parent.mkdir(parents=True)
+    path.write_text("fixture")
+    stage(repository, ".gitignore", "src/hardcheck/reports/template.txt")
+    assert len(check_secrets.tracked_files(repository)) == 2

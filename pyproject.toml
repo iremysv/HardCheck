@@ -41,4 +41,4 @@ select = ["E", "F", "I", "UP", "B"]
 
 [tool.bandit]
 # Keep every rule enabled; reviewed exceptions are attached to individual lines.
-assert_used = {skips = []}
+skips = []
