@@ -57,6 +57,6 @@ are separate maintainer actions. This document does not perform them. Never
 publish credentials or host reports as release artifacts. Preserve the exact
 artifact filenames and hashes with the validation record if artifacts are shared.
 
-Step 10 will execute and record the final clean-install and acceptance checks.
+See [step 10](step-10.md) for the local clean-install and acceptance results.
 The earlier Python 3.11, remote CI and browser appearance checks remain pending
 until new evidence explicitly records them as passed.
