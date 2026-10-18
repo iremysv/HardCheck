@@ -1,15 +1,39 @@
-"""Scan tracked regular files offline; report locations without secret values."""
+"""Scan staged regular-file blobs offline; never report secret values."""
 
 import json
+import re
 import shutil
 import stat
 import subprocess  # nosec B404
 import sys
 from pathlib import Path
+from tempfile import TemporaryDirectory
 
 
 class ScanError(ValueError):
     """An incomplete scan must never be reported as clean."""
+
+
+def reject_ignored(
+    root: Path, paths: list[str], work_tree: Path | None = None
+) -> None:
+    """Check ignore rules from the selected tree, retaining Git's other excludes."""
+    executable = shutil.which("git")
+    if executable is None:
+        raise ScanError("Git executable is unavailable")
+    arguments = [executable]
+    if work_tree is not None:
+        arguments.extend(["--work-tree", str(work_tree)])
+    ignored = subprocess.run(  # nosec B603
+        [*arguments, "check-ignore", "--no-index", "--stdin", "-z"],
+        cwd=root,
+        input=("\0".join(paths) + "\0").encode("utf-8"),
+        capture_output=True,
+        check=False,
+        timeout=15,
+    )
+    if ignored.returncode not in (0, 1) or ignored.stdout:
+        raise ScanError("Index contains ignored files or ignore check failed")
 
 
 def tracked_files(root: Path) -> list[str]:
@@ -30,16 +54,7 @@ def tracked_files(root: Path) -> list[str]:
     if not paths:
         raise ScanError("No tracked files")
     # Ignore rules also guard the index: git add -f must not bypass local-data policy.
-    ignored = subprocess.run(  # nosec B603
-        [executable, "check-ignore", "--no-index", "--stdin", "-z"],
-        cwd=root,
-        input=("\0".join(paths) + "\0").encode("utf-8"),
-        capture_output=True,
-        check=False,
-        timeout=15,
-    )
-    if ignored.returncode not in (0, 1) or ignored.stdout:
-        raise ScanError("Index contains ignored files or ignore check failed")
+    reject_ignored(root, paths)
     for path in paths:
         relative = Path(path)
         if relative.is_absolute() or ".." in relative.parts:
@@ -51,26 +66,62 @@ def tracked_files(root: Path) -> list[str]:
     return paths
 
 
+def snapshot_index(root: Path, paths: list[str], destination: Path) -> None:
+    """Copy staged blobs, never checkout filters or mutable working-tree contents."""
+    executable = shutil.which("git")
+    if executable is None:
+        raise ScanError("Git executable is unavailable")
+    completed = subprocess.run(  # nosec B603
+        [executable, "ls-files", "--stage", "-z"],
+        cwd=root, capture_output=True, check=True, timeout=15,
+    )
+    entries = {}
+    for record in completed.stdout.decode("utf-8").split("\0"):
+        if not record:
+            continue
+        metadata, path = record.split("\t", 1)
+        mode, oid, stage = metadata.split()
+        if (
+            mode not in {"100644", "100755"}
+            or stage != "0"
+            or not re.fullmatch(r"(?:[0-9a-f]{40}|[0-9a-f]{64})", oid)
+            or not oid.strip("0")
+            or path in entries
+        ):
+            raise ScanError("Unsupported index entry")
+        entries[path] = oid
+    if set(entries) != set(paths):
+        raise ScanError("Index changed during enumeration")
+    for path in paths:
+        relative = Path(path)
+        if relative.is_absolute() or ".." in relative.parts:
+            raise ScanError("Unsafe index path")
+        blob = subprocess.run(  # nosec B603
+            [executable, "cat-file", "blob", entries[path]],
+            cwd=root, capture_output=True, check=True, timeout=15,
+        )
+        target = destination / relative
+        target.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
+        # The private temporary parent prevents access while these files exist.
+        with target.open("xb") as stream:
+            stream.write(blob.stdout)
+    reject_ignored(root, paths, destination)
+
+
 def scan(root: Path) -> tuple[int, list[tuple[str, int, str]]]:
     """The detector's scan command exits zero on findings; enforce failure here."""
     paths = tracked_files(root)
-    # No credential verification: candidate values must never reach a service.
-    completed = subprocess.run(  # nosec B603
-        [
-            sys.executable,
-            "-m",
-            "detect_secrets",
-            "scan",
-            "--no-verify",
-            "--all-files",
-            "--",
-            *("./" + path for path in paths),
-        ],
-        cwd=root,
-        capture_output=True,
-        check=False,
-        timeout=120,
-    )
+    with TemporaryDirectory(prefix="hardcheck-staged-secrets-") as directory:
+        snapshot = Path(directory)
+        snapshot_index(root, paths, snapshot)
+        # No verification or Git checkout filters: staged candidates stay local.
+        completed = subprocess.run(  # nosec B603
+            [
+                sys.executable, "-m", "detect_secrets", "scan", "--no-verify",
+                "--all-files", "--", *("./" + path for path in paths),
+            ],
+            cwd=snapshot, capture_output=True, check=False, timeout=120,
+        )
     if completed.returncode or completed.stderr:
         raise ScanError("Secret detector did not complete cleanly")
     document = json.loads(completed.stdout)
@@ -78,6 +129,15 @@ def scan(root: Path) -> tuple[int, list[tuple[str, int, str]]]:
         raise ScanError("Invalid detector response")
     findings = []
     for path, items in document["results"].items():
+        relative = Path(path)
+        if (
+            relative.is_absolute()
+            or ".." in relative.parts
+            or str(relative) not in paths
+        ):
+            raise ScanError("Detector returned an unscanned path")
+        if not isinstance(items, list):
+            raise ScanError("Invalid detector findings")
         for item in items:
             findings.append((path, int(item["line_number"]), str(item["type"])))
     return len(paths), sorted(findings)
@@ -96,7 +156,7 @@ def main() -> int:
     if findings:
         print(f"Secret scan: {len(findings)} finding(s); values withheld.")
         return 1
-    print(f"Secret scan: {count} tracked files; no findings.")
+    print(f"Secret scan: {count} staged files; no findings.")
     return 0
 
 

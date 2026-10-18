@@ -32,11 +32,18 @@ optional development dependencies, not CLI runtime dependencies.
 
 ## Secret gate
 
-`check_secrets.py` enumerates the Git index using NUL-separated paths, checks for
-force-tracked ignored files and refuses missing, escaping or nonregular paths.
+`check_secrets.py` enumerates the Git index using NUL-separated paths and snapshots
+its exact regular-file blobs in a private temporary directory. It rejects
+unmerged/nonregular index entries and missing, escaping or nonregular working
+paths. Both staged and current ignore rules reject force-tracked ignored files.
+Git checkout filters are never executed. The snapshot is removed after scanning,
+including when the detector fails. Disk edits cannot hide staged secret candidates.
 It invokes all default detect-secrets plugins with `--no-verify` against only those
-tracked files. Candidates never reach a credential-verification service. There
-is no baseline that silently accepts a set of existing findings.
+staged files. Candidates never reach a credential-verification service. There
+is no baseline that silently accepts a set of existing findings. Stage all intended
+changes before scanning; unstaged content and history are outside this gate. A
+later index change requires rerunning it. The scan does not lock the index across
+the later commit operation.
 
 The detector's scan command ordinarily exits zero even with findings; the wrapper
 examines its JSON and returns 1 when findings exist. Errors, warnings, invalid

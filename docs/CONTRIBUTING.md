@@ -54,8 +54,11 @@ python scripts/check_secrets.py
 python scripts/audit_dependencies.py
 ```
 
-The secret gate scans the Git index's file list and current working-tree contents.
-New files must be staged to be included; rerun it after staging and before commit.
+The secret gate scans exact regular-file blobs from the Git index in a private
+temporary snapshot. Stage all intended changes, then run it before commit.
+Unstaged content is not scanned and changing the index requires another run.
+Both staged and current ignore rules are enforced; tracked working paths must
+also remain regular, present and inside the repository.
 Review staged paths and diffs yourself. Do not add broad secret allowlists or
 advisory exceptions to obtain a passing gate. Dependency auditing needs advisory
 service access; an unavailable service is an incomplete check.

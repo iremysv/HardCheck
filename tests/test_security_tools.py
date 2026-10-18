@@ -3,6 +3,7 @@
 import hashlib
 import json
 import shutil
+import stat
 import subprocess
 from pathlib import Path
 from types import SimpleNamespace
@@ -56,6 +57,79 @@ def test_secret_scan_ignores_untracked_local_environment(repository):
     assert findings == []
 
 
+def test_staged_secret_is_detected_after_unstaged_cleanup(repository):
+    token = (
+        "AKIA" + hashlib.sha256(b"staged synthetic fixture").hexdigest()[:16].upper()
+    )
+    path = repository / "settings.txt"
+    path.write_text(f'aws_access_key_id = "{token}"\n')
+    stage(repository, "settings.txt")
+    path.write_text("safe_setting = true\n")
+    count, findings = check_secrets.scan(repository)
+    assert count == 1 and any("AWS" in finding[2] for finding in findings)
+    assert token not in repr(findings)
+    assert path.read_text() == "safe_setting = true\n"
+    staged = subprocess.check_output(
+        [shutil.which("git"), "show", ":settings.txt"], cwd=repository
+    )
+    assert token.encode() in staged
+
+
+def test_unstaged_secret_is_not_reported_as_staged(repository):
+    path = repository / "settings.txt"
+    path.write_text("safe_setting = true\n")
+    stage(repository, "settings.txt")
+    token = (
+        "AKIA" + hashlib.sha256(b"unstaged synthetic fixture").hexdigest()[:16].upper()
+    )
+    path.write_text(f'aws_access_key_id = "{token}"\n')
+    assert check_secrets.scan(repository) == (1, [])
+
+
+def test_staged_ignore_cannot_be_bypassed_with_unstaged_edit(repository):
+    ignore = repository / ".gitignore"
+    ignore.write_text(".env\n")
+    (repository / ".env").write_text("LOCAL=fixture\n")
+    subprocess.run(
+        [shutil.which("git"), "add", "-f", ".gitignore", ".env"],
+        cwd=repository, check=True,
+    )
+    ignore.write_text("")
+    with pytest.raises(check_secrets.ScanError, match="ignored files"):
+        check_secrets.scan(repository)
+
+
+def test_staged_symlink_cannot_be_hidden_with_regular_working_file(repository):
+    link = repository / "link.txt"
+    link.symlink_to("target.txt")
+    stage(repository, "link.txt")
+    link.unlink()
+    link.write_text("safe fixture")
+    with pytest.raises(check_secrets.ScanError, match="index entry"):
+        check_secrets.scan(repository)
+
+
+def test_private_snapshot_is_removed_when_detector_fails(repository, monkeypatch):
+    (repository / "fixture.txt").write_text("staged fixture\n")
+    stage(repository, "fixture.txt")
+    original = subprocess.run
+    snapshots = []
+
+    def execute(argv, **kwargs):
+        if "detect_secrets" not in argv:
+            return original(argv, **kwargs)
+        snapshot = Path(kwargs["cwd"])
+        snapshots.append(snapshot)
+        assert stat.S_IMODE(snapshot.stat().st_mode) == 0o700
+        assert (snapshot / "fixture.txt").read_text() == "staged fixture\n"
+        return SimpleNamespace(returncode=1, stdout=b"", stderr=b"tool failure")
+
+    monkeypatch.setattr(check_secrets.subprocess, "run", execute)
+    with pytest.raises(check_secrets.ScanError):
+        check_secrets.scan(repository)
+    assert len(snapshots) == 1 and not snapshots[0].exists()
+
+
 def test_tracked_symlink_is_an_incomplete_scan(repository):
     (repository / "real.txt").write_text("fixture")
     (repository / "link.txt").symlink_to("real.txt")
@@ -88,6 +162,7 @@ def test_tracked_file_removed_before_scan_is_not_clean(repository, monkeypatch, 
 )
 def test_detector_errors_and_warnings_cannot_pass(response, monkeypatch):
     monkeypatch.setattr(check_secrets, "tracked_files", lambda _: ["fixture.py"])
+    monkeypatch.setattr(check_secrets, "snapshot_index", lambda *args: None)
     monkeypatch.setattr(check_secrets.subprocess, "run", lambda *a, **k: response)
     with pytest.raises((check_secrets.ScanError, ValueError)):
         check_secrets.scan(Path("."))
@@ -95,6 +170,7 @@ def test_detector_errors_and_warnings_cannot_pass(response, monkeypatch):
 
 def test_detector_never_verifies_candidates_online(monkeypatch):
     monkeypatch.setattr(check_secrets, "tracked_files", lambda _: ["-weird.py"])
+    monkeypatch.setattr(check_secrets, "snapshot_index", lambda *args: None)
 
     def execute(argv, **kwargs):
         assert "--no-verify" in argv
