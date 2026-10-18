@@ -60,7 +60,12 @@ def inspect_ssh_config(
         active.add(resolved)
         try:
             for raw_line in content.splitlines():
-                lexer = shlex.shlex(raw_line, posix=True)
+                # OpenSSH permits one optional '=' after the keyword. Normalize
+                # only that boundary: Include filenames may themselves contain '='.
+                line = re.sub(
+                    r"^([ \t]*[^ \t=]+)[ \t]*=[ \t]*", r"\1 ", raw_line, count=1
+                )
+                lexer = shlex.shlex(line, posix=True)
                 lexer.whitespace_split = True
                 lexer.quotes = '"'
                 lexer.escape = ""

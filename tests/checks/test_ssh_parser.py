@@ -4,8 +4,47 @@ import os
 
 import pytest
 
-from hardcheck.checks.ssh import SshRootLoginDisabledCheck, inspect_ssh_config
+from hardcheck.checks.ssh import (
+    SshEmptyPasswordsDisabledCheck,
+    SshMaxAuthTriesCheck,
+    SshPasswordAuthenticationDisabledCheck,
+    SshRootLoginDisabledCheck,
+    inspect_ssh_config,
+)
 from hardcheck.models import Status
+
+
+@pytest.mark.parametrize("separator", ["=", " =", "= ", " = ", "\t=\t"])
+@pytest.mark.parametrize("check,directive,unsafe,safe", [
+    (SshRootLoginDisabledCheck, "PermitRootLogin", "yes", "no"),
+    (SshPasswordAuthenticationDisabledCheck, "PasswordAuthentication", "yes", "no"),
+    (SshMaxAuthTriesCheck, "MaxAuthTries", "9", "4"),
+    (SshEmptyPasswordsDisabledCheck, "PermitEmptyPasswords", "yes", "no"),
+])
+def test_equals_separator_preserves_first_value(
+    tmp_path, separator, check, directive, unsafe, safe
+):
+    config = tmp_path / "sshd_config"
+    config.write_text(f"  {directive}{separator}{unsafe}\n{directive} {safe}\n")
+    assert check(config).run().status == Status.FAIL
+    config.write_text(f"{directive}{separator}{safe}\n{directive} {unsafe}\n")
+    assert check(config).run().status == Status.PASS
+
+
+@pytest.mark.parametrize("separator", ["=", " = ", "\t=\t"])
+def test_equals_include_is_expanded_without_changing_path(tmp_path, separator):
+    # Equals in the argument is a filename character, not another separator.
+    (tmp_path / "policy=part.conf").write_text("PermitRootLogin=yes\n")
+    config = tmp_path / "sshd_config"
+    config.write_text(f'Include{separator}"policy=part.conf"\nPermitRootLogin no\n')
+    assert SshRootLoginDisabledCheck(config, tmp_path).run().status == Status.FAIL
+
+
+@pytest.mark.parametrize("separator", ["=", " = ", "\t=\t"])
+def test_equals_match_cannot_be_ignored(tmp_path, separator):
+    config = tmp_path / "sshd_config"
+    config.write_text(f"PermitRootLogin no\nMatch{separator}all\n")
+    assert SshRootLoginDisabledCheck(config).run().status == Status.WARN
 
 
 def test_include_lexical_order_and_global_first_value(tmp_path):

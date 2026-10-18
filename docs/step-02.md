@@ -18,7 +18,9 @@ Policy severity overrides are user choices, not a certification of compliance.
 ## SSH evaluation boundaries
 
 The static parser evaluates the four supported explicit directives, with the
-first global value taking precedence. Global Includes expand in lexical order;
+first global value taking precedence. Whitespace and the optional `=` separator
+after a keyword are supported, including for Include and Match. Equals signs in
+argument values are preserved. Global Includes expand in lexical order;
 relative paths use `/etc/ssh`, not the including file's directory. Unmatched
 patterns are ignored. Double-quoted arguments and comments are parsed without shell escape expansion.
 Wildcards in directory components and recursive globbing yield WARN; only the
