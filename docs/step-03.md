@@ -10,11 +10,16 @@ local lint and tests remain part of development. Earlier run records are retaine
 
 - USR-001 reads only the local shadow database, rejecting empty password fields.
   Locked markers are nonempty. No account names or password values reach results.
-  File absence yields SKIP; denied access, malformed/duplicate records and empty
-  databases yield WARN. It does not assess NSS/LDAP, PAM nullok, hash strength,
+  File absence yields SKIP; denied access and empty databases yield WARN.
+  Malformed/duplicate records make coverage partial; a valid record with an
+  empty password still yields FAIL, otherwise partial coverage yields WARN.
+  It does not assess NSS/LDAP, PAM nullok, hash strength,
   account expiry or whether a nonempty hash allows authentication.
 - USR-002 requires exactly one UID-zero account, named root, in local passwd.
   Fields, duplicate names, bounded numeric UID/GID syntax and range are validated.
+  A valid non-root UID-zero record yields FAIL even alongside malformed records,
+  regardless of record order. Partial coverage is reported explicitly and cannot
+  establish compliance or prove that the root account is absent.
   NSS/LDAP identities and user namespaces are outside this static scope.
 - USR-003 checks a single explicit PASS_MAX_DAYS default in login.defs: 1–90.
   Duplicate/missing/invalid settings yield WARN. This default affects new accounts;

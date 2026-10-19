@@ -4,7 +4,14 @@ import re
 from pathlib import Path
 
 from hardcheck.checks.base import BaseCheck
-from hardcheck.models import CheckResult, Evidence, EvidenceKey, Severity, Status
+from hardcheck.models import (
+    CheckResult,
+    Evidence,
+    EvidenceKey,
+    EvidenceValue,
+    Severity,
+    Status,
+)
 from hardcheck.safe_io import read_regular_text
 
 
@@ -33,23 +40,38 @@ class AccountCheck(BaseCheck):
         names: set[str] = set()
         if not rows:
             return self.result(Status.WARN, "Local account file is empty")
+        valid_rows = []
+        partial = False
         for row in rows:
-            if len(row) != self.fields or not row[0] or row[0] in names:
-                return self.result(Status.WARN, "Malformed local account records")
+            if len(row) != self.fields or not row[0]:
+                partial = True
+                continue
             if row[0].startswith(("+", "-")) or any(c.isspace() for c in row[0]):
-                return self.result(Status.WARN, "Unsupported local account records")
+                partial = True
+                continue
+            if row[0] in names:
+                partial = True
             names.add(row[0])
-        status = self.evaluate(rows)
-        facts = [Evidence(EvidenceKey.RECORDS, len(rows))]
+            if self.evaluate([row]) == Status.WARN:
+                partial = True
+                continue
+            valid_rows.append(row)
+        if self.check_id == "USR-001":
+            matches = sum(row[1] == "" for row in valid_rows)
+        else:
+            matches = sum(
+                int(row[2]) == 0 and row[0] != "root" for row in valid_rows
+            )
+            # Absence can only be established from a complete inventory.
+            if not partial:
+                matches += int(not any(
+                    row[0] == "root" and int(row[2]) == 0 for row in valid_rows
+                ))
+        status = Status.FAIL if matches else Status.WARN if partial else Status.PASS
+        facts = [Evidence(EvidenceKey.RECORDS, len(valid_rows))]
+        if partial:
+            facts.append(Evidence(EvidenceKey.COVERAGE, EvidenceValue.PARTIAL))
         if status in {Status.PASS, Status.FAIL}:
-            if self.check_id == "USR-001":
-                matches = sum(row[1] == "" for row in rows)
-            else:
-                extra = sum(int(row[2]) == 0 and row[0] != "root" for row in rows)
-                missing_root = not any(
-                    row[0] == "root" and int(row[2]) == 0 for row in rows
-                )
-                matches = extra + int(missing_root)
             facts.append(Evidence(EvidenceKey.MATCHES, matches))
         return self.result(
             status,

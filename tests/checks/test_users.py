@@ -3,7 +3,7 @@
 import pytest
 
 from hardcheck.checks.users import EmptyPasswordCheck, RootUidCheck
-from hardcheck.models import Status
+from hardcheck.models import Evidence, EvidenceKey, EvidenceValue, Status
 
 
 @pytest.mark.parametrize(("password", "expected"), [
@@ -48,3 +48,42 @@ def test_account_read_failures(tmp_path, monkeypatch, check):
 
     monkeypatch.setattr(users, "read_regular_text", denied)
     assert check(tmp_path / "private").run().status == Status.WARN
+
+
+@pytest.mark.parametrize("reverse", [False, True])
+@pytest.mark.parametrize(("check", "unsafe", "other"), [
+    (EmptyPasswordCheck, "private-user::20000:0:90:7:::", "malformed"),
+    (EmptyPasswordCheck, "private-user::20000:0:90:7:::",
+     "private-user:!:20000:0:90:7:::"),
+    (RootUidCheck, "private-user:x:0:0::/:/bin/sh", "malformed"),
+    (RootUidCheck, "private-user:x:0:0::/:/bin/sh",
+     "broken:x:invalid:0::/:/bin/sh"),
+    (RootUidCheck, "private-user:x:0:0::/:/bin/sh",
+     "+nis:x:0:0::/:/bin/sh"),
+])
+def test_known_account_violation_survives_partial_inventory(
+    tmp_path, check, unsafe, other, reverse
+):
+    path = tmp_path / "accounts"
+    rows = [unsafe, other]
+    path.write_text("\n".join(reversed(rows) if reverse else rows) + "\n")
+    result = check(path).run()
+    assert result.status == Status.FAIL
+    assert Evidence(EvidenceKey.COVERAGE, EvidenceValue.PARTIAL) in result.evidence
+    assert Evidence(EvidenceKey.MATCHES, 1) in result.evidence
+    assert "private-user" not in repr(result)
+
+
+@pytest.mark.parametrize(("check", "safe"), [
+    (EmptyPasswordCheck, "private-user:!:20000:0:90:7:::"),
+    (RootUidCheck, "root:x:0:0::/:/bin/sh"),
+    (RootUidCheck, "private-user:x:1000:1000::/:/bin/sh"),
+])
+def test_partial_inventory_cannot_prove_compliance_or_missing_root(
+    tmp_path, check, safe
+):
+    path = tmp_path / "accounts"
+    path.write_text(safe + "\nmalformed\n")
+    result = check(path).run()
+    assert result.status == Status.WARN
+    assert Evidence(EvidenceKey.COVERAGE, EvidenceValue.PARTIAL) in result.evidence
