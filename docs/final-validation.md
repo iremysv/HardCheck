@@ -1,8 +1,9 @@
 # Audit fixes and current validation (2026-10-18)
 
 The identified code and packaging defects have been corrected. Local acceptance
-is complete on macOS; final remote CI still requires the latest changes to be
-committed and pushed by the maintainer. This is not a published release or a
+is complete on macOS and final remote Linux CI passed for commit `c54ffd6`.
+The maintainer committed and pushed the candidate; the agent dispatched and
+inspected the manual workflow. This is not a published release or a
 claim that no further defects can exist. Earlier step documents retain their
 historical test counts and artifact hashes.
 
@@ -46,6 +47,7 @@ statuses, hidden errors, empty selection, policy metadata, private files,
 overwrite refusal and `pip check`. Installations used already cached dependencies
 offline. Source builds used explicitly installed setuptools without build
 isolation. No package-index publication occurred.
+The final extracted source archive also passed all 403 tests on Python 3.12.
 
 Ruff and Bandit passed. The exact installed Python 3.12 validation environment
 dependency audit reported no known vulnerabilities. Its advisory lookup used
@@ -80,18 +82,25 @@ directory must be new; it contains only synthetic HTML, screenshots and
 outside the repository or in an ignored directory. Local review output is under
 `/private/tmp/hardcheck-browser-final` and may be removed by the operating system.
 
-## Remote CI and remaining maintainer action
+## Remote CI and closure
 
 [Manual run 39155659273](https://github.com/iremysv/HardCheck/actions/runs/39155659273)
 tested commit `d17984f432a92bbac2bf9668c7a4bd26eba9584e`. Its security job passed;
 both quality jobs stopped at Ruff E501 in `environment.py`. That formatting
-correction is in the current working tree and local Ruff passes. This failed run
-is not claimed as successful CI for the completed candidate.
+correction was included in the completed candidate. This failed run is retained
+as historical evidence, not claimed as successful CI.
 
-Commit and push the final changes, then dispatch `ci.yml` on that ref and inspect
-both quality jobs and the security job. The updated workflow also runs clean
-artifact acceptance. No automatic push/PR triggers were added. Commit ownership
-remains with the maintainer; the agent does not commit or push these changes.
+[Manual run 39156508122](https://github.com/iremysv/HardCheck/actions/runs/39156508122)
+passed for `c54ffd6237716f4a23498db05e78c8c6948d5550`. Both Linux quality jobs
+(Python 3.11 and 3.12) passed lint, tests, dependency consistency and fresh wheel
+and source installation acceptance. The security job passed Bandit, staged secret
+scanning and exact installed-dependency auditing. All jobs completed successfully.
+This closes the previously pending interpreter, artifact and remote CI checks.
+
+No automatic push/PR triggers were added. Commit ownership remains with the
+maintainer; the agent did not commit or push the candidate. This documentation
+follow-up records the result after the successful run; runtime code is unchanged.
+Future code/dependency changes require fresh validation before release.
 No history rewriting or deletion of old branches is needed for the observed code
 defects. Author email visibility is a separate privacy choice, not evidence of a
 credential leak or computer access.

@@ -97,5 +97,6 @@ publish credentials or host reports as release artifacts. Preserve the exact
 artifact filenames and hashes with the validation record if artifacts are shared.
 
 See [step 10](step-10.md) for the local clean-install and acceptance results.
-The earlier Python 3.11, remote CI and browser appearance checks remain pending
-until new evidence explicitly records them as passed.
+The earlier Python 3.11, remote CI and browser appearance checks are closed for
+the candidate recorded in [final validation](final-validation.md). Repeat the
+applicable checks for later release candidates; past results are not transferable.
