@@ -4,7 +4,7 @@ Read-only Linux security auditing CLI, implemented in Python 3.11+.
 
 ## Current status
 
-The first nine milestones are implemented: eighteen SSH, local account,
+The ten planned milestones are complete: eighteen SSH, local account,
 filesystem, network, kernel and legacy-service checks; an isolated scan engine,
 strict YAML policies and bounded read-only queries. Environment markers label
 Linux distribution, init system and possible container scope. Quality checks can be started
@@ -17,6 +17,8 @@ See [reporting, scoring and exit codes](docs/reporting.md),
 [contributing](docs/CONTRIBUTING.md), [security policy](docs/SECURITY.md) and
 [release preparation](docs/RELEASING.md). Step 10 validation and audit fixes are
 recorded in [the current validation record](docs/final-validation.md).
+Version 0.1.0 release notes are in [the release summary](docs/release-0.1.0.md).
+Package-index publication remains a separate step; install from this checkout below.
 
 ## Install and run
 

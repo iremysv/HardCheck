@@ -4,7 +4,7 @@ Python 3.11+ ile geliştirilen, Linux yapılandırmalarını salt okunur inceley
 
 ## Mevcut durum
 
-İlk dokuz aşama tamamlandı: toplam 18 SSH, yerel hesap, dosya sistemi, ağ, çekirdek
+Planlanan on aşama tamamlandı: toplam 18 SSH, yerel hesap, dosya sistemi, ağ, çekirdek
 ve eski servis kontrolü; tarama motoru ve doğrulanan YAML politikaları. Dağıtım,
 servis yöneticisi ve olası konteyner kapsamı sonuçlarda belirtilir. Kalite kontrolleri
 GitHub Actions üzerinden Python 3.11/3.12 için elle başlatılabilir; commitler
@@ -16,6 +16,8 @@ Ayrıntılar: [7. adım: HTML ve diller](docs/step-07.md).
 [Katkı rehberi](docs/CONTRIBUTING.md), [güvenlik politikası](docs/SECURITY.md) ve
 [yayın hazırlığı](docs/RELEASING.md) mevcut. 10. adımın güncel doğrulamaları ve
 denetim sonrası düzeltmeler: [doğrulama kaydı](docs/final-validation.md).
+0.1.0 sürüm notları: [sürüm özeti](docs/release-0.1.0.md).
+Paket indeksinde yayımlama ayrı bir adımdır; aşağıdaki kurulum bu kaynak kodu kullanır.
 
 ## Kurulum ve kullanım
 

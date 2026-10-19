@@ -1,7 +1,7 @@
 # Step 10: packaging and acceptance validation
 
 Current closure: all identified audit defects and the named local/browser/remote
-acceptance gates are complete. Linux CI passed for `c54ffd6`; see
+acceptance gates are complete. Linux CI passed for `d14216a`; see
 [final validation](final-validation.md) for the current evidence and exact scope.
 The initial run and intermediate packaging correction below are historical.
 

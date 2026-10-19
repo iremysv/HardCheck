@@ -1,5 +1,6 @@
 """User checks run only against temporary account databases."""
 
+# pyrefly: ignore[missing-import]
 import pytest
 
 from hardcheck.checks.users import EmptyPasswordCheck, RootUidCheck

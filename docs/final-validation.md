@@ -1,4 +1,29 @@
-# Audit fixes and current validation (2026-10-18)
+# Audit fixes and current validation
+
+## Final candidate validation (2026-10-19)
+
+Commit `d14216a7ac8bac9b00c53d382fb417a237ecec2b` includes the account inventory
+fix: confirmed empty-password and non-root UID-zero findings remain FAIL even
+when other records are invalid. Partial coverage remains explicit and cannot
+prove compliance or a missing root account. Thirteen regression cases cover
+ordering, malformed records, duplicate names and incomplete safe inventories.
+
+[Manual CI run 39267098673](https://github.com/iremysv/HardCheck/actions/runs/39267098673)
+completed successfully for that exact commit. Both Linux quality jobs (Python
+3.11 and 3.12) and the security job passed, including fresh wheel/source
+installation acceptance and the installed dependency vulnerability audit.
+
+Local Python 3.14.3 validation passed 416 tests with 97% statement coverage.
+Ruff, Bandit and dependency consistency checks passed. The committed index
+secret scan covered 88 files with no findings. Documentation subsequently
+updated for milestone closure and release notes is not part of that CI commit;
+the runtime code is unchanged. Run the staged secret gate after staging it.
+
+All ten planned implementation and acceptance milestones are complete.
+Package publication and release tagging have not been performed.
+See [0.1.0 release notes](release-0.1.0.md) for functionality and limits.
+
+## Previous candidate validation (2026-10-18)
 
 The identified code and packaging defects have been corrected. Local acceptance
 is complete on macOS and final remote Linux CI passed for commit `c54ffd6`.
