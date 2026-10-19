@@ -32,3 +32,20 @@ and recalculates exported summary fields. It never starts a live scan.
 
 Run functional tests with `node --test web/tests/report.test.cjs`.
 These tests use a DOM stub and do not establish visual browser correctness.
+
+## Review and comparison tools
+
+Findings default to ERROR, FAIL, WARN, SKIP, PASS order, with severity and check
+identifier as tie-breakers. Users can sort by identifier or title, page through
+10/25/50 findings, and clear filters. Changing filters resets pagination.
+Dashboard counts and full-report downloads remain independent of UI filters.
+
+Reports can be compared by check identifier within the current session. Only
+FAIL → PASS is labelled resolved and PASS → FAIL is labelled a new noncompliance.
+Other status transitions, severity changes and controls present in only one
+report are distinguished. Text/evidence changes are not compared; the user must
+verify that reports refer to the same system. No host identity is inferred.
+
+A scope notice surfaces source-filtered controls and hidden ERROR counts reported
+by scan_summary, and clarifies the limits of the displayed score. Imported reports
+are supplied data, not independently authenticated scan results.
