@@ -1,0 +1,402 @@
+{
+  "schema_version": 1,
+  "language": "tr",
+  "hardcheck_version": "0.1.0",
+  "scope": {
+    "basis": "displayed_controls",
+    "min_severity": null,
+    "collected_controls": 18,
+    "hidden_controls": 0,
+    "host_namespace_verified": false,
+    "environments": [],
+    "limitations": "S\u0131n\u0131rl\u0131 g\u00f6zlemler; g\u00fcvenlik garantisi de\u011fildir."
+  },
+  "summary": {
+    "total": 18,
+    "counts": {
+      "PASS": 11,
+      "FAIL": 3,
+      "WARN": 3,
+      "SKIP": 1,
+      "ERROR": 0
+    },
+    "assessed": 14,
+    "coverage_percent": 77.78,
+    "score_percent": 78.57
+  },
+  "scan_summary": {
+    "total": 18,
+    "counts": {
+      "PASS": 11,
+      "FAIL": 3,
+      "WARN": 3,
+      "SKIP": 1,
+      "ERROR": 0
+    },
+    "assessed": 14,
+    "coverage_percent": 77.78,
+    "score_percent": 78.57
+  },
+  "findings": [
+    {
+      "check_id": "FS-001",
+      "title": "Passwd dosyas\u0131n\u0131n \u00fcst verisini koruyun",
+      "category": "filesystem",
+      "severity": "high",
+      "status": "FAIL",
+      "reason": "probe_result",
+      "note": "",
+      "environment": null,
+      "expected": "Root sahibi olan normal dosya; tam izin de\u011feri 0644",
+      "rationale": "G\u00fcvenilmeyen yazma eri\u015fimi, hesap kimliklerini ve yetki e\u015flemelerini de\u011fi\u015ftirebilir.",
+      "remediation": "\u0130zinleri 0644 yapmadan \u00f6nce ger\u00e7ek hedefi, root sahipli\u011fini, yedekleri ve da\u011f\u0131t\u0131m politikas\u0131n\u0131 do\u011frulay\u0131n. \u00dcst dizinleri ve ACL izinlerini ayr\u0131ca inceleyin; /etc \u00fczerinde \u00f6zyinelemeli chmod \u00e7al\u0131\u015ft\u0131rmay\u0131n.",
+      "reference": "https://man7.org/linux/man-pages/man7/inode.7.html",
+      "evidence": [
+        {
+          "key": "assessment",
+          "value": "unknown"
+        }
+      ]
+    },
+    {
+      "check_id": "FS-002",
+      "title": "Shadow dosyas\u0131n\u0131n \u00fcst verisini koruyun",
+      "category": "filesystem",
+      "severity": "critical",
+      "status": "PASS",
+      "reason": "probe_result",
+      "note": "",
+      "environment": null,
+      "expected": "Root sahibi olan normal dosya; izinler 0640 s\u0131n\u0131r\u0131n\u0131n alt k\u00fcmesi olmal\u0131",
+      "rationale": "Parola \u00f6zetlerine eri\u015fim s\u0131k\u0131 bi\u00e7imde k\u0131s\u0131tlanmal\u0131d\u0131r.",
+      "remediation": "Root sahipli\u011fini ve g\u00fcvenilir shadow okuma grubunu do\u011frulay\u0131n; izinleri onayl\u0131 0640 alt k\u00fcmesiyle s\u0131n\u0131rlay\u0131n. ACL ve grup \u00fcyeliklerini ayr\u0131ca inceleyin. Parola \u00f6zetlerini asla raporlara yazmay\u0131n veya kopyalamay\u0131n.",
+      "reference": "https://man7.org/linux/man-pages/man7/inode.7.html",
+      "evidence": [
+        {
+          "key": "assessment",
+          "value": "unknown"
+        }
+      ]
+    },
+    {
+      "check_id": "FS-003",
+      "title": "Payla\u015f\u0131lan ge\u00e7ici dizin girdilerini koruyun",
+      "category": "filesystem",
+      "severity": "high",
+      "status": "FAIL",
+      "reason": "probe_result",
+      "note": "",
+      "environment": null,
+      "expected": "Root sahibi olan dizinde sticky bit bulunmal\u0131",
+      "rationale": "Sticky bit, di\u011fer kullan\u0131c\u0131lar\u0131n dizin girdilerini silme yetkisini s\u0131n\u0131rlar.",
+      "remediation": "/tmp hedefini do\u011frulay\u0131n ve uygun eri\u015fimi koruyarak sticky bit ayarlay\u0131n. Ba\u011flama politikas\u0131n\u0131 ayr\u0131ca inceleyin; sticky bit tek ba\u015f\u0131na ge\u00e7ici dosya kullan\u0131m\u0131n\u0131 g\u00fcvenli k\u0131lmaz.",
+      "reference": "https://man7.org/linux/man-pages/man2/chmod.2.html",
+      "evidence": [
+        {
+          "key": "assessment",
+          "value": "unknown"
+        }
+      ]
+    },
+    {
+      "check_id": "FS-004",
+      "title": "Herkesin yazabildi\u011fi ayar dosyalar\u0131n\u0131 inceleyin",
+      "category": "filesystem",
+      "severity": "high",
+      "status": "PASS",
+      "reason": "probe_result",
+      "note": "",
+      "environment": null,
+      "expected": "Herkesin yazabildi\u011fi normal dosya bulunmamal\u0131",
+      "rationale": "Yetkisiz kullan\u0131c\u0131lar g\u00fcvenli\u011fi etkileyen yap\u0131land\u0131rmalar\u0131 de\u011fi\u015ftirebilir.",
+      "remediation": "Etkilenen yollar\u0131 g\u00fcvenilir bir ara\u00e7la yerelde belirleyin; sahipli\u011fi ve uygulama gereksinimlerini do\u011frulay\u0131p istenmeyen genel yazma iznini dosya baz\u0131nda kald\u0131r\u0131n. \u00d6zyinelemeli izin de\u011fi\u015fikliklerinden ka\u00e7\u0131n\u0131n.",
+      "reference": "https://man7.org/linux/man-pages/man7/inode.7.html",
+      "evidence": [
+        {
+          "key": "assessment",
+          "value": "unknown"
+        }
+      ]
+    },
+    {
+      "check_id": "KRN-001",
+      "title": "Tam adres rastgelele\u015ftirmesini etkinle\u015ftirin",
+      "category": "kernel",
+      "severity": "high",
+      "status": "WARN",
+      "reason": "probe_result",
+      "note": "",
+      "environment": null,
+      "expected": "randomize_va_space = 2",
+      "rationale": "Adres rastgelele\u015ftirmesi, bellek a\u00e7\u0131klar\u0131n\u0131n kullan\u0131lmas\u0131n\u0131 daha az \u00f6ng\u00f6r\u00fclebilir k\u0131labilir.",
+      "remediation": "Tam ASLR ve kal\u0131c\u0131 politikas\u0131n\u0131 etkinle\u015ftirmeden \u00f6nce mimari ve i\u015f y\u00fck\u00fc uyumlulu\u011funu kontrol edin. De\u011fi\u015fikliklerden sonra canl\u0131 de\u011feri do\u011frulay\u0131n; ASLR bellek g\u00fcvenli yaz\u0131l\u0131m\u0131n yerine ge\u00e7mez.",
+      "reference": "https://docs.kernel.org/admin-guide/sysctl/kernel.html",
+      "evidence": [
+        {
+          "key": "assessment",
+          "value": "unknown"
+        }
+      ]
+    },
+    {
+      "check_id": "KRN-002",
+      "title": "\u00c7ekirdek g\u00fcnl\u00fc\u011f\u00fc eri\u015fimini k\u0131s\u0131tlay\u0131n",
+      "category": "kernel",
+      "severity": "high",
+      "status": "PASS",
+      "reason": "probe_result",
+      "note": "",
+      "environment": null,
+      "expected": "dmesg_restrict = 1",
+      "rationale": "K\u0131s\u0131tlanmam\u0131\u015f \u00e7ekirdek g\u00fcnl\u00fckleri, g\u00fcvenlikle ilgili ayr\u0131nt\u0131lar\u0131 a\u00e7\u0131\u011fa \u00e7\u0131karabilir.",
+      "remediation": "\u0130zleme ve i\u015fletim eri\u015fimi gereksinimlerini inceleyin; yetkisiz \u00e7ekirdek g\u00fcnl\u00fc\u011f\u00fc eri\u015fimini k\u0131s\u0131tlay\u0131p kal\u0131c\u0131l\u0131\u011f\u0131n\u0131 do\u011frulay\u0131n. Di\u011fer g\u00fcnl\u00fck eri\u015fim yollar\u0131n\u0131 ayr\u0131ca inceleyin.",
+      "reference": "https://docs.kernel.org/admin-guide/sysctl/kernel.html",
+      "evidence": [
+        {
+          "key": "assessment",
+          "value": "unknown"
+        }
+      ]
+    },
+    {
+      "check_id": "NET-001",
+      "title": "Etkin gelen trafik filtrelemesini do\u011frulay\u0131n",
+      "category": "network",
+      "severity": "high",
+      "status": "FAIL",
+      "reason": "probe_result",
+      "note": "",
+      "environment": null,
+      "expected": "Desteklenen etkin g\u00fcvenlik duvar\u0131 kan\u0131t\u0131",
+      "rationale": "Etkin filtreleme, istenmeyen a\u011f eri\u015fimini azaltabilir.",
+      "remediation": "Kurtarma eri\u015fimi olan bir oturumdan ana sistemin g\u00fcvenlik duvar\u0131 ile IPv4/IPv6 kurallar\u0131n\u0131 inceleyin. Filtrelemeyi a\u00e7madan veya de\u011fi\u015ftirmeden \u00f6nce gerekli y\u00f6netim eri\u015fimini koruyun. Otomatik \u00e7\u00f6z\u00fcm olarak kurallar\u0131 asla temizlemeyin.",
+      "reference": "https://www.netfilter.org/projects/nftables/manpage.html",
+      "evidence": [
+        {
+          "key": "assessment",
+          "value": "unknown"
+        }
+      ]
+    },
+    {
+      "check_id": "NET-002",
+      "title": "FTP ve telnet dinleyicilerini inceleyin",
+      "category": "network",
+      "severity": "high",
+      "status": "WARN",
+      "reason": "probe_result",
+      "note": "",
+      "environment": null,
+      "expected": "21 ve 23 numaral\u0131 TCP portlar\u0131nda dinleyici bulunmamal\u0131",
+      "rationale": "Eski servisler, kimlik bilgilerini ta\u015f\u0131ma \u015fifrelemesi olmadan a\u00e7\u0131\u011fa \u00e7\u0131karabilir.",
+      "remediation": "Dinleyicileri ve servis sahiplerini yerelde belirleyin; gereksiz servisleri kapatmadan \u00f6nce onayl\u0131 \u015fifreli bir alternatife ge\u00e7in. Port numaras\u0131 tek ba\u015f\u0131na protokol\u00fc veya uzaktan eri\u015filebilirli\u011fi kan\u0131tlamaz.",
+      "reference": "https://docs.kernel.org/networking/proc_net_tcp.html",
+      "evidence": [
+        {
+          "key": "assessment",
+          "value": "unknown"
+        }
+      ]
+    },
+    {
+      "check_id": "NET-003",
+      "title": "IP y\u00f6nlendirmesini inceleyin",
+      "category": "network",
+      "severity": "high",
+      "status": "PASS",
+      "reason": "probe_result",
+      "note": "",
+      "environment": null,
+      "expected": "IPv4 ve genel IPv6 y\u00f6nlendirme de\u011ferleri 0 olmal\u0131",
+      "rationale": "Gereksiz y\u00f6nlendirme, u\u00e7 nokta \u00fczerinden istenmeyen trafi\u011fin ge\u00e7irilmesine izin verebilir.",
+      "remediation": "Sistemin y\u00f6nlendirmeye ihtiya\u00e7 duyan bir y\u00f6nlendirici, VPN a\u011f ge\u00e7idi veya konteyner ana sistemi olmad\u0131\u011f\u0131n\u0131 do\u011frulay\u0131n. Ard\u0131ndan canl\u0131 ve kal\u0131c\u0131 ayarlar\u0131 inceleyin; IPv6 aray\u00fcz ge\u00e7ersiz k\u0131lmalar\u0131n\u0131 ayr\u0131ca de\u011ferlendirin.",
+      "reference": "https://docs.kernel.org/networking/ip-sysctl.html",
+      "evidence": [
+        {
+          "key": "assessment",
+          "value": "unknown"
+        }
+      ]
+    },
+    {
+      "check_id": "SSH-001",
+      "title": "Do\u011frudan root SSH giri\u015fini kapat\u0131n",
+      "category": "ssh",
+      "severity": "high",
+      "status": "PASS",
+      "reason": "probe_result",
+      "note": "",
+      "environment": null,
+      "expected": "PermitRootLogin no",
+      "rationale": "Do\u011frudan root giri\u015fi, i\u015flemlerin ki\u015fisel hesaplarla ili\u015fkilendirilmesini engeller.",
+      "remediation": "Denenmi\u015f bir y\u00f6netici oturumunu ve kurtarma eri\u015fimini koruyun. Genel ve Match ayarlar\u0131n\u0131 inceleyin, do\u011frudan root giri\u015fini kapat\u0131n, sshd -t ile do\u011frulay\u0131n ve yeniden y\u00fcklemeden \u00f6nce ayr\u0131 bir oturumda giri\u015f deneyin.",
+      "reference": "https://man.openbsd.org/sshd_config",
+      "evidence": [
+        {
+          "key": "assessment",
+          "value": "unknown"
+        }
+      ]
+    },
+    {
+      "check_id": "SSH-002",
+      "title": "SSH parola do\u011frulamas\u0131n\u0131 kapat\u0131n",
+      "category": "ssh",
+      "severity": "high",
+      "status": "PASS",
+      "reason": "probe_result",
+      "note": "",
+      "environment": null,
+      "expected": "PasswordAuthentication no",
+      "rationale": "Parolayla giri\u015f, SSH hizmetini parola tahmini ve yeniden kullan\u0131lan parolalara kar\u015f\u0131 a\u00e7\u0131k b\u0131rak\u0131r.",
+      "remediation": "\u00d6nce alternatif do\u011frulama y\u00f6ntemini ve kurtarma eri\u015fimini kurup deneyin. PAM ve klavye etkile\u015fimli do\u011frulama yollar\u0131n\u0131 inceleyin; sshd ayarlar\u0131n\u0131 do\u011frulay\u0131p yeniden y\u00fcklemeden \u00f6nce ayr\u0131 bir oturum deneyin.",
+      "reference": "https://man.openbsd.org/sshd_config",
+      "evidence": [
+        {
+          "key": "assessment",
+          "value": "unknown"
+        }
+      ]
+    },
+    {
+      "check_id": "SSH-003",
+      "title": "SSH do\u011frulama denemelerini s\u0131n\u0131rlay\u0131n",
+      "category": "ssh",
+      "severity": "high",
+      "status": "PASS",
+      "reason": "probe_result",
+      "note": "",
+      "environment": null,
+      "expected": "MaxAuthTries: 1\u20134",
+      "rationale": "Ba\u011flant\u0131 ba\u015f\u0131na s\u0131n\u0131r, yinelenen do\u011frulama denemelerini azalt\u0131r.",
+      "remediation": "Do\u011frulama uyumlulu\u011funu inceleyin, MaxAuthTries de\u011ferini 1\u20134 yap\u0131n, sshd -t ile do\u011frulay\u0131n ve yeniden y\u00fcklemeden \u00f6nce deneyin. Bu ayar genel bir h\u0131z s\u0131n\u0131rlay\u0131c\u0131 de\u011fildir.",
+      "reference": "https://man.openbsd.org/sshd_config",
+      "evidence": [
+        {
+          "key": "assessment",
+          "value": "unknown"
+        }
+      ]
+    },
+    {
+      "check_id": "SSH-004",
+      "title": "Bo\u015f SSH parolalar\u0131n\u0131 reddedin",
+      "category": "ssh",
+      "severity": "high",
+      "status": "WARN",
+      "reason": "probe_result",
+      "note": "",
+      "environment": null,
+      "expected": "PermitEmptyPasswords no",
+      "rationale": "Bo\u015f parolalar istenmeyen, do\u011frulamas\u0131z eri\u015fime izin verebilir.",
+      "remediation": "PermitEmptyPasswords ayar\u0131n\u0131 kapat\u0131n; yerel hesap ve PAM politikas\u0131n\u0131 inceleyin, sshd -t ile do\u011frulay\u0131n ve yeniden y\u00fcklemeden \u00f6nce ayr\u0131 bir oturum deneyin.",
+      "reference": "https://man.openbsd.org/sshd_config",
+      "evidence": [
+        {
+          "key": "assessment",
+          "value": "unknown"
+        }
+      ]
+    },
+    {
+      "check_id": "SVC-001",
+      "title": "Eski uzaktan eri\u015fim yaz\u0131l\u0131mlar\u0131n\u0131 inceleyin",
+      "category": "services",
+      "severity": "high",
+      "status": "PASS",
+      "reason": "probe_result",
+      "note": "",
+      "environment": null,
+      "expected": "Bilinen telnet/rsh paketleri veya birimleri bulunmamal\u0131",
+      "rationale": "Eski uzaktan eri\u015fim yaz\u0131l\u0131mlar\u0131 kimlik bilgilerini a\u00e7\u0131\u011fa \u00e7\u0131karabilir ve zay\u0131f g\u00fcven modelleri kullanabilir.",
+      "remediation": "Eski yaz\u0131l\u0131m\u0131 kapatmadan veya kald\u0131rmadan \u00f6nce paket/birim sahipli\u011fini ve ba\u011f\u0131ml\u0131l\u0131klar\u0131n\u0131 do\u011frulay\u0131n. \u00d6nce istemcileri ta\u015f\u0131y\u0131n; \u00f6zel birimleri, inetd/xinetd tan\u0131mlar\u0131n\u0131 ve elle kurulmu\u015f programlar\u0131 ayr\u0131ca inceleyin.",
+      "reference": "https://www.freedesktop.org/software/systemd/man/latest/systemctl.html",
+      "evidence": [
+        {
+          "key": "assessment",
+          "value": "unknown"
+        }
+      ]
+    },
+    {
+      "check_id": "USR-001",
+      "title": "Bo\u015f yerel parola alanlar\u0131n\u0131 reddedin",
+      "category": "users",
+      "severity": "high",
+      "status": "PASS",
+      "reason": "probe_result",
+      "note": "",
+      "environment": null,
+      "expected": "Yerel shadow dosyas\u0131nda bo\u015f parola alan\u0131 bulunmamal\u0131",
+      "rationale": "Bo\u015f bir parola alan\u0131, parolas\u0131z do\u011frulamaya izin verebilir.",
+      "remediation": "Servis ba\u011f\u0131ml\u0131l\u0131klar\u0131n\u0131 inceledikten sonra g\u00fcvenilir hesap y\u00f6netim ara\u00e7lar\u0131yla etkilenen hesaplar\u0131 kilitleyin veya kimlik bilgilerini ayarlay\u0131n. Shadow i\u00e7eri\u011fini a\u00e7\u0131\u011fa \u00e7\u0131karmay\u0131n; parola \u00f6zetlerini do\u011frudan d\u00fczenlemeyin.",
+      "reference": "https://man7.org/linux/man-pages/man5/shadow.5.html",
+      "evidence": [
+        {
+          "key": "assessment",
+          "value": "unknown"
+        }
+      ]
+    },
+    {
+      "check_id": "USR-002",
+      "title": "UID 0 yetkisini root ile s\u0131n\u0131rlay\u0131n",
+      "category": "users",
+      "severity": "critical",
+      "status": "PASS",
+      "reason": "probe_result",
+      "note": "",
+      "environment": null,
+      "expected": "UID 0 olan tek hesap root olmal\u0131",
+      "rationale": "Ek UID 0 hesaplar\u0131 root ile e\u015fde\u011fer yetkilere sahiptir.",
+      "remediation": "Yetkili hesaplar\u0131 ve dosya sahipli\u011fini y\u00f6neticiyle inceleyin; istenmeyen UID 0 atamalar\u0131n\u0131 hesap y\u00f6netim ara\u00e7lar\u0131yla kald\u0131r\u0131n. Kurtarma eri\u015fimini koruyun; hesaplar\u0131 incelemeden silmeyin.",
+      "reference": "https://man7.org/linux/man-pages/man5/passwd.5.html",
+      "evidence": [
+        {
+          "key": "assessment",
+          "value": "unknown"
+        }
+      ]
+    },
+    {
+      "check_id": "USR-003",
+      "title": "Parola ya\u015f\u0131 varsay\u0131lanlar\u0131n\u0131 inceleyin",
+      "category": "users",
+      "severity": "medium",
+      "status": "PASS",
+      "reason": "probe_result",
+      "note": "",
+      "environment": null,
+      "expected": "A\u00e7\u0131k\u00e7a tan\u0131mlanm\u0131\u015f PASS_MAX_DAYS: 1\u201390",
+      "rationale": "Proje politikas\u0131, yeni hesaplar\u0131n varsay\u0131lan parola \u00f6mr\u00fcn\u00fc s\u0131n\u0131rlar.",
+      "remediation": "login.defs de\u011fi\u015fikli\u011finden \u00f6nce kurumun do\u011frulama politikas\u0131n\u0131 inceleyin. Mevcut hesaplar\u0131 ayr\u0131ca de\u011ferlendirin; bu varsay\u0131lan\u0131 de\u011fi\u015ftirmek onlar\u0131n s\u00fcrelerini de\u011fi\u015ftirmez ve evrensel bir parola politikas\u0131 de\u011fildir.",
+      "reference": "https://man7.org/linux/man-pages/man5/login.defs.5.html",
+      "evidence": [
+        {
+          "key": "assessment",
+          "value": "unknown"
+        }
+      ]
+    },
+    {
+      "check_id": "USR-004",
+      "title": "En d\u00fc\u015f\u00fck parola uzunlu\u011funu ayarlay\u0131n",
+      "category": "users",
+      "severity": "high",
+      "status": "SKIP",
+      "reason": "probe_result",
+      "note": "",
+      "environment": null,
+      "expected": "Karakter kredileri sonras\u0131 uzunluk en az 12 olmal\u0131",
+      "rationale": "Pozitif karakter kredileri, gereken ger\u00e7ek parola uzunlu\u011funu azaltabilir.",
+      "remediation": "pwquality ek ayarlar\u0131n\u0131, pozitif kredileri ve enforcing ayar\u0131n\u0131 inceleyin; en az 12 ger\u00e7ek karakter gerektirin. PAM etkinli\u011fini, parametre ge\u00e7ersiz k\u0131lmalar\u0131n\u0131 ve root istisnalar\u0131n\u0131 ayr\u0131ca do\u011frulay\u0131n. Mevcut parolalar incelenmez.",
+      "reference": "https://github.com/libpwquality/libpwquality/blob/master/doc/man/pwquality.conf.5.pod",
+      "evidence": [
+        {
+          "key": "assessment",
+          "value": "unknown"
+        }
+      ]
+    }
+  ]
+}

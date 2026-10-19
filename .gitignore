@@ -24,6 +24,8 @@ virtualenv/
 # Build artifacts and packaging
 build/
 dist/
+# Buildless web UI source assets are intentionally kept in this directory.
+!web/dist/
 site/
 *.egg-info/
 .eggs/
