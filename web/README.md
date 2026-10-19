@@ -20,3 +20,15 @@ controls are counted separately. Zero findings do not imply compliance.
 
 The site is an independently deployed static companion; Python packaging is
 unchanged. The `.openai/hosting.json` file records its private Sites identity.
+
+## Console layout
+
+The dark console follows the supplied video reference: fixed navigation, overview
+cards, a conditional score ring, category breakdowns and actionable findings.
+Hash routes provide Overview, Findings, Reports and Help screens. The report list
+keeps at most ten entries in memory for the current tab session; no localStorage
+is used. The sample-report dialog filters the bundled synthetic data by category
+and recalculates exported summary fields. It never starts a live scan.
+
+Run functional tests with `node --test web/tests/report.test.cjs`.
+These tests use a DOM stub and do not establish visual browser correctness.
