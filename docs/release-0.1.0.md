@@ -48,3 +48,12 @@ remain subject to the documented per-check limits.
 
 See the [English README](../README.md), [Turkish README](../README.tr.md),
 [threat model](threat-model.md) and [release procedure](RELEASING.md).
+
+## Local application extension
+
+The working tree now includes `serve`, user-level Linux launcher installation,
+authenticated loopback scanning and automatic panel results/exports. Evidence
+collection for NET-002 now includes observed listener counts and coverage, with
+unchanged status decisions. See [local application](local-application.md) for
+the separate validation record and pending Ubuntu/UTM acceptance. This does not
+change the earlier release validation record or announce a published release.

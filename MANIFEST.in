@@ -5,3 +5,7 @@ recursive-include examples *.yaml
 recursive-include scripts *.py
 recursive-include tests *.py
 global-exclude .DS_Store *.py[cod]
+
+include setup.py
+recursive-include web/dist *.html *.js *.css *.json
+recursive-include web/tests *.cjs

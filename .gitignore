@@ -104,3 +104,9 @@ Desktop.ini
 tmp/
 temp/
 .local/
+
+# Common personal report names at repository root
+/hardcheck-report*.json
+/hardcheck-report*.html
+/report.json
+/report.html

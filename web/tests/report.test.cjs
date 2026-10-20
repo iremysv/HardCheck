@@ -7,7 +7,7 @@ const root=path.resolve(__dirname,'..');
 function harness(){
  const els=new Map();
  function el(){return {textContent:'',hidden:false,value:'',style:{},dataset:{},children:[],listeners:{},addEventListener(name,handler){this.listeners[name]=handler},setAttribute(){},append(...items){this.children.push(...items)},replaceChildren(...items){this.children=items},classList:{add(){},remove(){}}};}
- const context=vm.createContext({location:{hash:'#overview'},window:{scrollTo(){},addEventListener(){}},document:{getElementById(id){if(!els.has(id))els.set(id,el());return els.get(id)},createElement:el,querySelector:el,querySelectorAll(){return []}},URL,Blob,setTimeout,fetch:()=>new Promise(()=>{})});
+ const context=vm.createContext({location:{hash:'#overview'},window:{scrollTo(){},addEventListener(){}},document:{getElementById(id){if(!els.has(id))els.set(id,el());return els.get(id)},createElement:el,querySelector(selector){return selector.startsWith("meta[")?null:el()},querySelectorAll(){return []}},URL,Blob,setTimeout,fetch:()=>new Promise(()=>{})});
  vm.runInContext(fs.readFileSync(path.join(root,'dist/app.js'),'utf8'),context);
  context.data=JSON.parse(fs.readFileSync(path.join(root,'dist/demo.json'),'utf8'));
  return {context,els,run:code=>vm.runInContext(code,context)};
@@ -29,3 +29,26 @@ test('priority sort ranks errors and critical failures before passing controls',
 test('comparison does not treat missing or uncertain findings as remediation',()=>{const h=harness();const actual=h.run('compareReports({findings:[{check_id:"A",status:"FAIL"},{check_id:"B",status:"FAIL"},{check_id:"C",status:"FAIL"},{check_id:"D",status:"PASS"}]},{findings:[{check_id:"A",status:"PASS"},{check_id:"C",status:"WARN"},{check_id:"D",status:"FAIL"},{check_id:"E",status:"PASS"}]}).map(r=>r.kind).join(",")');assert.equal(actual,'resolved,removed,changed,regressed,added');});
 test('comparison requires distinct reports and renders actual transitions',()=>{const h=harness();h.run('applyReport(data,"before",false); const newer=JSON.parse(JSON.stringify(data));newer.findings[0].status="PASS";applyReport(newer,"after",false);showComparison()');assert.equal(h.els.get('comparison-result').children[0].children[0].children[0].textContent,1);h.els.get('compare-before').value='0';h.run('showComparison()');assert.match(h.els.get('comparison-result').children[0].textContent,/İki farklı/);});
 test('filtered internal errors remain explicit outside the score',()=>{const h=harness();h.run('data.scope.collected_controls=20;data.scan_summary.counts.ERROR=2;applyReport(data,"filtered",false)');assert.match(h.els.get('scope-notice').textContent,/2 kontrol kaynak raporda/);assert.match(h.els.get('scope-notice').textContent,/2 ERROR sonucu kaynak raporda gizli/);assert.equal(h.els.get('scope-notice').hidden,false);});
+
+test('evidence uses the Python JSON contract and retains unknown observations',()=>{
+ const {execFileSync}=require('node:child_process');
+ const python=process.env.HARDCHECK_TEST_PYTHON || path.join(root,'../.venv/bin/python');
+ const code=`import json, tempfile
+from pathlib import Path
+from hardcheck.checks.listeners import LegacyListenerCheck
+from hardcheck.reporting import json_report
+with tempfile.TemporaryDirectory() as directory:
+ root = Path(directory)
+ for name in ('tcp', 'tcp6'):
+  (root / name).write_text('sl local_address rem_address st tx_queue rx_queue\\n')
+ result = LegacyListenerCheck(root).run()
+ print(json_report([result], [result], language='tr'))
+`;
+ const h=harness();h.context.actual=JSON.parse(execFileSync(python,['-c',code],{encoding:'utf8',env:{...process.env,PYTHONPATH:path.join(root,'../src')}}));
+ h.run('applyReport(actual,"fixture",false)');
+ const text=h.els.get('findings').children[0].children[1].children[1].children[1].textContent;
+ assert.equal(text,'TCP 21 dinleyicisi: 0\nTCP 23 dinleyicisi: 0\nKapsam: Kapsam içinde tam');
+ assert.equal(h.run('formatEvidence({key:"mode_bits",value:420})'),'İzin bitleri: 0644');
+ assert.equal(h.run('formatEvidence({key:"assessment",value:"unknown"})'),'Değerlendirme: Bilinmiyor');
+ assert.equal(h.context.actual.findings[0].status,'PASS');
+});

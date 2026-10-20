@@ -45,6 +45,11 @@ def build_parser() -> argparse.ArgumentParser:
         help="Show safe evidence and manual remediation guidance",
     )
     scan.add_argument("--min-severity", choices=("low", "medium", "high", "critical"))
+    serve = commands.add_parser("serve", help="Open the local read-only panel")
+    serve.add_argument("--open-browser", action="store_true")
+    serve.add_argument("--port", type=int, default=8765)
+    commands.add_parser("install-launcher", help="Install the user Linux launcher")
+    commands.add_parser("uninstall-launcher", help="Remove the user Linux launcher")
     commands.add_parser("list-checks", help="Show available check identifiers")
     return parser
 
@@ -52,6 +57,17 @@ def build_parser() -> argparse.ArgumentParser:
 def main(argv: list[str] | None = None) -> int:
     """Execute a CLI command and return the appropriate exit code."""
     arguments = build_parser().parse_args(argv)
+    if arguments.command in ("install-launcher", "uninstall-launcher"):
+        from hardcheck.desktop import install_launcher
+
+        return install_launcher(remove=arguments.command == "uninstall-launcher")
+    if arguments.command == "serve":
+        if not 1024 <= arguments.port <= 65535:
+            print("Port must be between 1024 and 65535", file=sys.stderr)
+            return 2
+        from hardcheck.launcher import serve
+
+        return serve(arguments.port, arguments.open_browser)
     if arguments.command == "list-checks":
         for check_class in get_registered_checks():
             print(check_class.check_id)

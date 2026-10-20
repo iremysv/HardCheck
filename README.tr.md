@@ -19,6 +19,14 @@ denetim sonrası düzeltmeler: [doğrulama kaydı](docs/final-validation.md).
 0.1.0 sürüm notları: [sürüm özeti](docs/release-0.1.0.md).
 Paket indeksinde yayımlama ayrı bir adımdır; aşağıdaki kurulum bu kaynak kodu kullanır.
 
+## Ubuntu uygulama başlatıcısı
+
+Güncel kodu bir kez `.venv/bin/python -m pip install .` ile kurup
+`.venv/bin/hardcheck install-launcher` çalıştırın. Sonrasında uygulama menüsünden
+**HardCheck** → **Gerçek taramayı başlat** akışı terminal gerektirmez; JSON/HTML
+aynı tamamlanmış taramadan indirilir. Servis yalnızca `127.0.0.1` üzerinde çalışır.
+[Kurulum, kaldırma ve Ubuntu doğrulaması](docs/local-application.md).
+
 ## Kurulum ve kullanım
 
 ```sh

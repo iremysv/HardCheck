@@ -104,3 +104,12 @@ Stage intended changes before running the secret gate; it scans exact staged blo
 not unstaged edits. Never commit environments, private keys, credentials or local audit data.
 The project is under active development; its current scope is not a complete
 system security assessment. License: MIT.
+
+## Ubuntu local application
+
+Install the updated package, then run `.venv/bin/hardcheck install-launcher` once.
+Open **HardCheck** in the application menu to launch the loopback service and
+browser panel. **Gerçek taramayı başlat** runs the existing read-only engine;
+JSON/HTML buttons export its completed result without rescanning. See
+[local application setup, removal and acceptance](docs/local-application.md).
+The CLI and standalone static viewer remain supported.

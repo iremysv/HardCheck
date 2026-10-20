@@ -4,8 +4,35 @@ import pytest
 
 from hardcheck.checks.listeners import LegacyListenerCheck
 from hardcheck.models import Status
+from hardcheck.reporting import report_data
 
 HEADER = "  sl local_address rem_address st tx_queue rx_queue\n"
+
+
+def test_report_contains_observed_counts_and_partial_coverage(tmp_path):
+    for name in ("tcp", "tcp6"):
+        (tmp_path / name).write_text(HEADER)
+    result = LegacyListenerCheck(tmp_path).run()
+    facts = report_data([result], [result])["findings"][0]["evidence"]
+    assert facts == [
+        {"key": "tcp_21_listeners", "value": 0},
+        {"key": "tcp_23_listeners", "value": 0},
+        {"key": "coverage", "value": "complete_within_scope"},
+    ]
+    (tmp_path / "tcp6").unlink()
+    (tmp_path / "tcp").write_text(HEADER + row(21) + row(21))
+    result = LegacyListenerCheck(tmp_path).run()
+    assert result.status == Status.FAIL
+    facts = report_data([result], [result])["findings"][0]["evidence"]
+    assert facts[0]["value"] == 2
+    assert facts[-1]["value"] == "partial"
+
+
+def test_no_readable_table_does_not_invent_zero_listener_counts(tmp_path):
+    result = LegacyListenerCheck(tmp_path).run()
+    assert result.status == Status.SKIP
+    facts = report_data([result], [result])["findings"][0]["evidence"]
+    assert [fact["value"] for fact in facts] == ["unknown", "unknown", "partial"]
 
 
 def row(port, width=8, state="0A"):

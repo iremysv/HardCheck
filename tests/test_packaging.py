@@ -15,7 +15,7 @@ def test_source_archive_contains_tools_tests_and_report_resources(tmp_path):
     for name in (
         ".editorconfig", ".gitignore", ".github", "LICENSE", "README.md",
         "README.tr.md", "pyproject.toml", "MANIFEST.in", "docs", "examples",
-        "scripts", "src", "tests",
+        "scripts", "src", "tests", "web", "setup.py",
     ):
         origin = repository / name
         target = source / name
@@ -79,6 +79,9 @@ def test_source_archive_contains_tools_tests_and_report_resources(tmp_path):
         names = set(archive.namelist())
         assert {
             "hardcheck/i18n/en.yaml", "hardcheck/i18n/tr.yaml",
+            "hardcheck/web/index.html", "hardcheck/web/app.js",
+            "hardcheck/web/local.js", "hardcheck/web/style.css",
+            "hardcheck/web/demo.json",
             "hardcheck/reports/templates/report.html.j2",
             "hardcheck/reports/templates/report.css",
         } <= names

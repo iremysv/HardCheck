@@ -35,6 +35,10 @@ function applyReport(data,name,demo,remember=true){
  updateDashboard(counts,score);updateScope(data,demo);render();renderHistory();
 }
 function addSection(parent,title,text,wide=false){const section=node('div',undefined,wide?'detail-wide':'');section.append(node('h3',title),node('p',text || 'Belirtilmemiş'));parent.append(section);}
+function formatEvidence(e){
+ const value=e.key==='mode_bits' && Number.isSafeInteger(e.value)?e.value.toString(8).padStart(4,'0'):(Object.hasOwn(valueLabels,e.value)?valueLabels[e.value]:String(e.value));
+ return (Object.hasOwn(evidenceLabels,e.key)?evidenceLabels[e.key]:e.key)+': '+value;
+}
 function render(){
  if(!report)return;
  document.querySelectorAll('[data-status]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.status===statusFilter)));
@@ -54,7 +58,7 @@ function render(){
   label.append(node('span',f.check_id,'check-id'),node('span',f.title,'finding-title'));
   summary.append(label,node('span',severityLabels[f.severity],'severity'),node('span',f.status,'badge '+f.status),node('span','›','chevron'));
   const content=node('div',undefined,'detail-content');
-  addSection(content,'Beklenen',f.expected);addSection(content,'Gözlem / kanıt',f.evidence.map(e=>(evidenceLabels[e.key]||e.key)+': '+(valueLabels[e.value]||String(e.value))).join('\n'));
+  addSection(content,'Beklenen',f.expected);addSection(content,'Gözlem / kanıt',f.evidence.map(formatEvidence).join('\n'));
   addSection(content,'Neden önemli?',f.rationale);addSection(content,'Önerilen adım',f.remediation);addSection(content,'Değerlendirme notu',f.note,true);
   try{const url=new URL(f.reference);if(['https:','http:'].includes(url.protocol)){const a=node('a','Kaynağı incele ↗');a.href=url.href;a.target='_blank';a.rel='noopener noreferrer';content.append(a);}}catch{}
   details.append(summary,content);$('findings').append(details);
@@ -180,4 +184,6 @@ $('clear-filters').addEventListener('click',clearFilters);$('sort').addEventList
 $('previous-page').addEventListener('click',()=>{pageIndex=Math.max(0,pageIndex-1);render();});$('next-page').addEventListener('click',()=>{pageIndex++;render();});
 $('compare').addEventListener('click',showComparison);
 for(const id of ['compare-before','compare-after'])$(id).addEventListener('change',()=>{$('comparison-result').replaceChildren(node('p','Seçim değişti. Sonuçları güncellemek için Karşılaştır’a basın.','empty'));});
-window.addEventListener('hashchange',navigate);navigate();loadDemo();
+window.addEventListener('hashchange',navigate);navigate();
+if(!document.querySelector('meta[name="hardcheck-csrf"]'))loadDemo();
+else {$('source-tag').textContent='RAPOR BEKLENİYOR';$('report-name').textContent='Henüz gerçek tarama yapılmadı';$('report-caption').textContent='Gerçek taramayı başlatın veya JSON raporu yükleyin.';$('count').textContent='0';}

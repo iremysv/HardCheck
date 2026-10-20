@@ -35,6 +35,8 @@ jobs:
         run: python -m ruff check .
       - name: Tests
         run: python -m pytest --cov=hardcheck --cov-report=term-missing
+      - name: Panel contract tests
+        run: HARDCHECK_TEST_PYTHON=python node --test web/tests/report.test.cjs
       - name: Validate installed wheel and source distribution
         shell: bash
         run: |
@@ -45,6 +47,7 @@ jobs:
             "$target/bin/python" -m pip install --upgrade 'pip>=26.2,<27'
             "$target/bin/python" -m pip install "$artifact"
             (cd "$RUNNER_TEMP"; "$target/bin/python" -I "$GITHUB_WORKSPACE/scripts/validate_install.py")
+            (cd "$RUNNER_TEMP"; "$target/bin/python" -I "$GITHUB_WORKSPACE/scripts/validate_local_install.py")
           done
 
   security:
