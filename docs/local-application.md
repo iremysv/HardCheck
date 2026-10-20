@@ -39,7 +39,7 @@ The entry is `~/.local/share/applications/hardcheck.desktop` (or the correspondi
    verdict: WARN/SKIP/ERROR remain explicit, and the score covers PASS/FAIL only.
 4. Click **Son tarama · JSON indir** and **Son tarama · HTML indir**. The browser
    saves the same completed scan; neither button runs checks again. The existing
-   **Tam raporu indir** exports the currently displayed report, including manually
+   **Görüntülenen raporu JSON indir** exports the currently displayed report, including manually
    loaded reports. The two actions are intentionally labelled differently.
 5. Click **Gerçek taramayı başlat** again to rescan. During a new or failed attempt,
    the previous displayed scan is marked **ÖNCEKİ TARAMA**, and local exports are
@@ -192,3 +192,26 @@ PYTHONPATH. These validators never audit the host.
 Send the new counts and any failing step (without password data or full private
 reports). A reproducible unexpected error will be investigated before calling
 Ubuntu acceptance complete.
+
+## Panel clarity follow-up
+
+The local application now keeps the sample-scan entry in Help, while the static
+viewer retains its heading action. PASS, FAIL, WARN, SKIP and ERROR have separate
+summary counts. The score card displays assessed/total controls and coverage;
+these values are calculated from the displayed report, never a user recording.
+The displayed-report JSON export is labelled separately from latest-scan exports.
+Reviewing a local scan from tab history preserves its previous-scan source label.
+Concurrent status refreshes cannot insert the same scan into history twice.
+
+User-provided Ubuntu video showed a local scan completing, automatic findings
+and a JSON export opening. This is observational evidence, not a complete Ubuntu
+acceptance run. Launcher startup, opened HTML/JSON agreement, repeat scans,
+comparison and simultaneous tabs still need user verification there. A connection
+error in a tab preview could not be attributed to the active service. No recording,
+frames or user report data are included in this change.
+
+Follow-up validation on macOS: 447 Python tests and 19 Node panel tests passed;
+Ruff, Bandit and relative documentation links passed. Real Chromium with synthetic
+checks passed at 1440px and 390px, including sample access from Help, distinct
+outcome counts, score coverage, download labels, retry and comparison. Screenshots
+were inspected. This does not replace the remaining Ubuntu acceptance steps.

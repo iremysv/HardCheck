@@ -6,6 +6,8 @@ if(sessionMeta){
  const start=$('real-scan'), state=$('local-state');
  let appliedGeneration=-1, pending=false;
  $('local-controls').hidden=false;
+ $('new-scan').hidden=true;
+ $('download').disabled=!report;
  const states={idle:'Hazır. Henüz gerçek tarama yapılmadı.',running:'Tarama sürüyor. Önceki veya yüklenen rapor varsa aşağıda ayrı olarak gösterilir.',completed:'Tarama tamamlandı. WARN, SKIP ve ERROR sonuçlarını ayrıca inceleyin.',error:'Tarama başarısız. Aşağıdaki önceki veya yüklenen rapor bu denemenin sonucu değildir.'};
  async function api(path,options={}){
   const response=await fetch(path,{...options,cache:'no-store',credentials:'same-origin',headers:{'X-HardCheck-CSRF':csrf,...options.headers}});
@@ -29,10 +31,8 @@ if(sessionMeta){
     const data=await (await api('/api/report.json')).json();
     // A concurrent tab can start another scan while this GET is in flight.
     const confirmed=await (await api('/api/status')).json();
-    if(confirmed.state==='completed' && confirmed.generation===current.generation){
-     ++sequence;applyReport(data,'Yerel tarama #'+current.generation,false);
-     $('source-tag').textContent='YEREL TARAMA';
-     $('report-caption').textContent='Bu yerel servisin tamamlanmış sonucu. Rapor dış sunucuya gönderilmedi.';
+    if(confirmed.state==='completed' && confirmed.generation===current.generation && appliedGeneration!==current.generation){
+     ++sequence;applyReport(data,'Yerel tarama #'+current.generation,false,true,'local');
      appliedGeneration=current.generation;
     }
    }

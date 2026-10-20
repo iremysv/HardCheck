@@ -55,6 +55,8 @@ def validate(executable, output):
                 page.on("pageerror", lambda error: errors.append(str(error)))
                 page.goto(server.origin)
                 start = page.locator("#real-scan")
+                expect(page.locator("#new-scan")).to_be_hidden()
+                expect(page.locator("#download")).to_be_disabled()
                 expect(start).to_be_enabled()
                 expect(page.locator("#local-state")).to_contain_text("Henüz")
                 expect(page.locator("#source-tag")).to_have_text("RAPOR BEKLENİYOR")
@@ -67,6 +69,15 @@ def validate(executable, output):
                 release.set()
                 expect(page.locator("#source-tag")).to_have_text("YEREL TARAMA")
                 expect(page.locator("#total")).to_have_text("1")
+                expect(page.locator("#passed")).to_have_text("1")
+                for identifier in ("failed", "warned", "skipped", "errors"):
+                    expect(page.locator("#" + identifier)).to_have_text("0")
+                expect(page.locator("#score-coverage")).to_have_text(
+                    "1/1 kontrol kesin değerlendirildi · %100 kapsam"
+                )
+                expect(page.locator("#download")).to_have_text(
+                    "↓ Görüntülenen raporu JSON indir"
+                )
                 page.locator("#findings details summary").click()
                 expect(page.locator("#findings")).to_contain_text(
                     "TCP 21 dinleyicisi: 0"
@@ -110,6 +121,11 @@ def validate(executable, output):
                     str(output / "synthetic-report.json")
                 )
                 expect(page.locator("#source-tag")).to_have_text("YÜKLENEN RAPOR")
+                page.locator('[data-nav="guide"]').click()
+                page.locator("#guide-demo").click()
+                expect(page.locator("#scan-dialog")).to_be_visible()
+                page.locator("#close-scan").click()
+                page.locator('[data-nav="overview"]').click()
                 page.locator("#reset").click()
                 expect(page.locator("#source-tag")).to_have_text("ÖRNEK RAPOR")
                 server.manager = ScanManager(supported=False)

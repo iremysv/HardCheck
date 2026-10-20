@@ -21,17 +21,21 @@ function validateReport(data){
  return data;
 }
 function message(text){$('message').textContent=text;$('message').hidden=!text;$('notice').hidden=true;}
-function applyReport(data,name,demo,remember=true){
+function applyReport(data,name,demo,remember=true,source="upload"){
  report=validateReport(data);statusFilter='ALL';pageIndex=0;filterSignature='';$('sort').value='priority';$('page-size').value='10';$('search').value='';$('severity').value='ALL';$('category').value='ALL';
- $('source-tag').textContent=demo?'ÖRNEK RAPOR':'YÜKLENEN RAPOR';$('report-name').textContent=demo?'Örnek yapılandırma':name;
+ $('source-tag').textContent=demo?'ÖRNEK RAPOR':source==='local'?'YEREL TARAMA':source==='previous'?'ÖNCEKİ TARAMA':'YÜKLENEN RAPOR';$('report-name').textContent=demo?'Örnek yapılandırma':name;
  $('report-caption').textContent=demo?'Arayüzü keşfetmen için hazırlanmış temsili sonuçlar. Gerçek bir sistem taraması değildir.':'Dosya yalnızca bu tarayıcı oturumunda açık. Kaynak: HardCheck '+String(data.hardcheck_version || '—')+' · Rapor dili: '+(data.language==='tr'?'Türkçe':data.language==='en'?'İngilizce':'Belirtilmemiş');
+ if(!demo && source==='local')$('report-caption').textContent='Bu yerel servisin tamamlanmış sonucu. Rapor dış sunucuya gönderilmedi.';
+ if(!demo && source==='previous')$('report-caption').textContent='Oturum geçmişinden açılan tamamlanmış tarama; son taramanın sonucu olmayabilir.';
  const counts=Object.fromEntries(statuses.map(s=>[s,data.findings.filter(f=>f.status===s).length]));
  const total=data.findings.length, assessed=counts.PASS+counts.FAIL;
  const score=assessed?Math.round(counts.PASS/assessed*100):null;
- $('total').textContent=total;$('failed').textContent=counts.FAIL;$('uncertain').textContent=total-assessed;
+ $('total').textContent=total;$('failed').textContent=counts.FAIL;$('warned').textContent=counts.WARN;$('skipped').textContent=counts.SKIP;$('errors').textContent=counts.ERROR;
  $('coverage').textContent=assessed+'/'+total+' kesin değerlendirildi'+(data.scope.collected_controls>total?' · '+(data.scope.collected_controls-total)+' kaynakta filtrelendi':'');
+ $('score-coverage').textContent=assessed+'/'+total+' kontrol kesin değerlendirildi'+(total?' · %'+Math.round(assessed/total*100)+' kapsam':'');
+ $('download').disabled=false;
  $('score').textContent=score===null?'—':'%'+score;$('score-bar').style.width=(score || 0)+'%';message('');
- if(remember){reportHistory.unshift({data,name:name || 'Örnek yapılandırma',demo,opened:new Date().toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit'})});reportHistory=reportHistory.slice(0,10);}
+ if(remember){reportHistory.unshift({data,name:name || 'Örnek yapılandırma',demo,source,opened:new Date().toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit'})});reportHistory=reportHistory.slice(0,10);}
  updateDashboard(counts,score);updateScope(data,demo);render();renderHistory();
 }
 function addSection(parent,title,text,wide=false){const section=node('div',undefined,wide?'detail-wide':'');section.append(node('h3',title),node('p',text || 'Belirtilmemiş'));parent.append(section);}
@@ -110,7 +114,7 @@ function renderHistory(){
   const row=node('article',undefined,'panel report-item'),info=node('div',undefined,'report-info');
   const passed=entry.data.findings.filter(f=>f.status==='PASS').length,failed=entry.data.findings.filter(f=>f.status==='FAIL').length;
   info.append(node('strong',entry.name+(entry.demo?' · ÖRNEK':'')),node('p','Açılış '+entry.opened+' · '+entry.data.findings.length+' kontrol · '+failed+' başarısız'));
-  const inspect=node('button','İncele','button secondary');inspect.addEventListener('click',()=>{applyReport(entry.data,entry.name,entry.demo,false);location.hash='overview';});
+  const inspect=node('button','İncele','button secondary');inspect.addEventListener('click',()=>{applyReport(entry.data,entry.name,entry.demo,false,entry.source==='local'?'previous':entry.source);location.hash='overview';});
   const download=node('button','↓','icon-button');download.setAttribute('aria-label',entry.name+' JSON indir');download.addEventListener('click',()=>downloadData(entry.data,entry.demo?'hardcheck-ornek.json':'hardcheck-rapor.json'));
   row.append(node('span','▤','report-icon'),info,node('span',passed+failed?'%'+Math.round(passed/(passed+failed)*100):'—','report-score'),inspect,download);$('report-list').append(row);
  }

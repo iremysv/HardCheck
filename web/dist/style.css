@@ -7,3 +7,10 @@ button:disabled{cursor:default;opacity:.4;filter:none}.scope-notice{font-size:11
 .local-actions{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px}
 .local-controls small{display:block;line-height:1.6;color:var(--muted)}
 @media(max-width:600px){.local-actions{flex-direction:column}.local-actions .button{width:100%;white-space:normal}}
+
+.metrics{grid-template-columns:repeat(3,minmax(0,1fr))}
+.metric.skipped strong{color:var(--muted)}
+.score-panel #score-coverage{font-size:14px;color:var(--text);font-weight:600}
+.score-panel .score-limit{font-size:11px;color:var(--muted);padding:0 16px}
+#download{white-space:normal;text-align:center;max-width:100%}
+@media(max-width:780px){.metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.findings-section>.panel-heading{flex-wrap:wrap}}

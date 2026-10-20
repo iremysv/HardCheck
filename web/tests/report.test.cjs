@@ -12,7 +12,7 @@ function harness(){
  context.data=JSON.parse(fs.readFileSync(path.join(root,'dist/demo.json'),'utf8'));
  return {context,els,run:code=>vm.runInContext(code,context)};
 }
-test('real generated report renders all controls and computes metrics',()=>{const h=harness();h.run('applyReport(data,"demo",true)');assert.equal(h.els.get('total').textContent,18);assert.equal(h.els.get('failed').textContent,3);assert.equal(h.els.get('uncertain').textContent,4);assert.equal(h.els.get('score').textContent,'%79');assert.equal(h.els.get('findings').children.length,10);});
+test('real generated report renders all controls and computes metrics',()=>{const h=harness();h.run('applyReport(data,"demo",true)');assert.equal(h.els.get('total').textContent,18);assert.equal(h.els.get('failed').textContent,3);assert.equal(h.els.get('warned').textContent,h.context.data.findings.filter(f=>f.status==='WARN').length);assert.equal(h.els.get('score').textContent,'%79');assert.equal(h.els.get('findings').children.length,10);});
 test('status, severity and search filters combine',()=>{const h=harness();h.run('applyReport(data,"demo",true); statusFilter="FAIL"; render()');assert.equal(h.els.get('findings').children.length,3);h.els.get('search').value='nonexistent';h.run('render()');assert.match(h.els.get('visible-count').textContent,/^0 \/ 18/);h.els.get('search').value='';h.els.get('severity').value='low';h.run('render()');assert.match(h.els.get('visible-count').textContent,/^0 \/ 18/);});
 test('empty report has no compliance score',()=>{const h=harness();h.run('data.findings=[]; applyReport(data,"empty",false)');assert.equal(h.els.get('score').textContent,'—');assert.match(h.els.get('findings').children[0].textContent,/güvenli olduğu anlamına gelmez/);});
 test('invalid data is rejected without replacing the current report',()=>{const h=harness();h.run('applyReport(data,"demo",true)');for(const mutation of ['data.schema_version=2','data.findings[0].status="OK"','data.findings[0].evidence=[null]']){assert.throws(()=>h.run(mutation+'; applyReport(data,"bad",false)'));}assert.equal(h.els.get('report-name').textContent,'Örnek yapılandırma');});
@@ -51,4 +51,43 @@ with tempfile.TemporaryDirectory() as directory:
  assert.equal(h.run('formatEvidence({key:"mode_bits",value:420})'),'İzin bitleri: 0644');
  assert.equal(h.run('formatEvidence({key:"assessment",value:"unknown"})'),'Değerlendirme: Bilinmiyor');
  assert.equal(h.context.actual.findings[0].status,'PASS');
+});
+
+
+test('separate outcome counts and score coverage reflect the report, not fixtures',()=>{
+ const h=harness();h.run('data.findings=data.findings.slice(0,5);data.findings.forEach((f,i)=>f.status=statuses[i]);applyReport(data,"synthetic",false)');
+ for(const id of ['passed','failed','warned','skipped','errors'])assert.equal(h.els.get(id).textContent,1);
+ assert.equal(h.els.get('score').textContent,'%50');
+ assert.equal(h.els.get('score-coverage').textContent,'2/5 kontrol kesin değerlendirildi · %40 kapsam');
+ h.run('data.findings.forEach(f=>f.status="SKIP");applyReport(data,"unassessed",false)');
+ assert.equal(h.els.get('score').textContent,'—');
+ assert.equal(h.els.get('skipped').textContent,5);
+ assert.equal(h.els.get('score-coverage').textContent,'0/5 kontrol kesin değerlendirildi · %0 kapsam');
+});
+
+test('history distinguishes local results from uploaded reports',()=>{
+ const h=harness();h.run('applyReport(data,"local fixture",false,true,"local")');
+ assert.equal(h.els.get('source-tag').textContent,'YEREL TARAMA');
+ h.els.get('report-list').children[0].children[3].listeners.click();
+ assert.equal(h.els.get('source-tag').textContent,'ÖNCEKİ TARAMA');
+ h.run('applyReport(data,"uploaded fixture",false)');
+ assert.equal(h.els.get('source-tag').textContent,'YÜKLENEN RAPOR');
+});
+
+test('overlapping local status refreshes remember a completed scan only once',async()=>{
+ const h=harness();let waiting=[];
+ h.context.document.querySelector=()=>({content:'synthetic-token'});
+ h.context.setTimeout=()=>{};
+ h.context.fetch=async path=>{
+  if(path==='/api/report.json')await new Promise(resolve=>{waiting.push(resolve);if(waiting.length===2)waiting.forEach(done=>done());});
+  return {ok:true,json:async()=>path==='/api/report.json'?h.context.data:{state:'completed',generation:1,supported:true,error:null}};
+ };
+ h.run('$("real-scan").disabled=false');
+ vm.runInContext(fs.readFileSync(path.join(root,'dist/local.js'),'utf8'),h.context);
+ await h.els.get('real-scan').listeners.click();
+ await new Promise(resolve=>setImmediate(resolve));
+ assert.equal(waiting.length,2);
+ assert.equal(h.els.get('report-list').children.length,1);
+ assert.equal(h.els.get('new-scan').hidden,true);
+ assert.equal(h.els.get('source-tag').textContent,'YEREL TARAMA');
 });

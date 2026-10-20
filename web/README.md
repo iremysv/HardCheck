@@ -51,3 +51,11 @@ verify that reports refer to the same system. No host identity is inferred.
 A scope notice surfaces source-filtered controls and hidden ERROR counts reported
 by scan_summary, and clarifies the limits of the displayed score. Imported reports
 are supplied data, not independently authenticated scan results.
+
+## Local panel clarity
+
+In local mode the real scan is the primary action; sample scans remain available
+in Help. Static mode retains the sample heading action. Five separate outcome
+counts and assessed/total coverage come from the loaded report. Displayed-report
+JSON exports are labelled separately from the local service's latest-scan JSON
+and HTML exports. Local history entries remain identified as previous scans.
