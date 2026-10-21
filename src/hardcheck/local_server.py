@@ -154,6 +154,10 @@ class Handler(BaseHTTPRequestHandler):
         self.close_connection = True
         self.wfile.write(body)
 
+    def send_error(self, code, message=None, explain=None):
+        """Apply the same headers to parser errors and unsupported methods."""
+        self.respond(code)
+
     def guard(self):
         if self.headers.get_all("Host") != [self.server.authority]:
             self.respond(403)

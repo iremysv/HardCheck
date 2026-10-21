@@ -91,3 +91,18 @@ test('overlapping local status refreshes remember a completed scan only once',as
  assert.equal(h.els.get('new-scan').hidden,true);
  assert.equal(h.els.get('source-tag').textContent,'YEREL TARAMA');
 });
+
+test('malformed metadata is rejected before changing report or history',()=>{
+ for(const mutation of ['bad.hardcheck_version={toString:null}','bad.language=[]','bad.scope.collected_controls=1e30']){
+  const h=harness();h.run('applyReport(data,"original",false);const original=report;const bad=JSON.parse(JSON.stringify(data));');
+  assert.throws(()=>h.run(mutation+';applyReport(bad,"invalid",false)'));
+  assert.equal(h.run('report===original'),true);
+  assert.equal(h.els.get('report-name').textContent,'original');
+  assert.equal(h.run('reportHistory.length'),1);
+ }
+});
+test('category names cannot resolve inherited object properties',()=>{
+ const h=harness();
+ h.run('data.findings.forEach(f=>f.category="__proto__");applyReport(data,"custom",false)');
+ assert.equal(h.els.get('categories').children[0].children[0].textContent,'__proto__');
+});

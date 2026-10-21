@@ -12,7 +12,10 @@ let pageIndex=0, filterSignature='';
 const categoryLabels={ssh:'SSH',users:'Hesaplar',filesystem:'Dosya sistemi',network:'Ağ',kernel:'Çekirdek',services:'Servisler'};
 function node(tag, text, cls){const el=document.createElement(tag);if(text!==undefined)el.textContent=text;if(cls)el.className=cls;return el;}
 function validateReport(data){
- if(!data || data.schema_version!==1 || !Array.isArray(data.findings) || data.findings.length>1000 || !data.scope || !Number.isInteger(data.scope.collected_controls) || data.scope.collected_controls<data.findings.length)throw new Error('HardCheck şema sürümü 1 ile oluşturulmuş bir JSON raporu seç.');
+ if(!data || data.schema_version!==1 || !Array.isArray(data.findings) || data.findings.length>1000 || !data.scope || !Number.isSafeInteger(data.scope.collected_controls) || data.scope.collected_controls<data.findings.length)throw new Error('HardCheck şema sürümü 1 ile oluşturulmuş bir JSON raporu seç.');
+ for(const key of ['hardcheck_version','language']){
+  if(data[key]!==undefined && (typeof data[key]!=='string' || data[key].length>100))throw new Error('Rapor üst bilgileri geçersiz.');
+ }
  const ids=new Set();
  for(const f of data.findings){
   if(!f || !statuses.includes(f.status) || !severities.includes(f.severity) || !['check_id','title','category','expected','rationale','remediation','note','reference'].every(k=>typeof f[k]==='string' && f[k].length<=50000) || !f.check_id || ids.has(f.check_id) || !Array.isArray(f.evidence) || f.evidence.length>100 || !f.evidence.every(e=>e && typeof e.key==='string' && e.key.length<=100 && (typeof e.value==='string' && e.value.length<=1000 || typeof e.value==='number' && Number.isFinite(e.value))))throw new Error('Raporun bulgu alanları eksik veya geçersiz. Dosyayı HardCheck ile yeniden oluştur.');
@@ -87,18 +90,18 @@ function updateDashboard(counts,score){
  $('category').replaceChildren();const all=node('option','Tüm alanlar');all.value='ALL';$('category').append(all);$('category').value='ALL';
  $('categories').replaceChildren();
  for(const category of groups){
-  const option=node('option',categoryLabels[category]||category);option.value=category;$('category').append(option);
+  const option=node('option',(Object.hasOwn(categoryLabels,category)?categoryLabels[category]:category));option.value=category;$('category').append(option);
   const items=report.findings.filter(f=>f.category===category), passed=items.filter(f=>f.status==='PASS').length;
   const row=node('div',undefined,'category-row'),bar=node('div',undefined,'category-bar');
   for(const status of statuses){const count=items.filter(f=>f.status===status).length;if(count){const segment=node('i',undefined,status);segment.style.width=(count/items.length*100)+'%';segment.title=status+': '+count;bar.append(segment);}}
-  row.append(node('span',categoryLabels[category]||category),bar,node('small',passed+'/'+items.length));$('categories').append(row);
+  row.append(node('span',(Object.hasOwn(categoryLabels,category)?categoryLabels[category]:category)),bar,node('small',passed+'/'+items.length));$('categories').append(row);
  }
  if(!groups.length)$('categories').append(node('p','Bu raporda gösterilen kontrol alanı yok.','empty'));
  $('priorities').replaceChildren();
  const priority=report.findings.filter(f=>f.status==='FAIL').sort((a,b)=>severities.indexOf(b.severity)-severities.indexOf(a.severity));
  for(const f of priority.slice(0,5)){
   const button=node('button',undefined,'priority-row'),text=node('span');
-  text.append(node('strong',f.title),node('small',f.check_id+' · '+(categoryLabels[f.category]||f.category)));
+  text.append(node('strong',f.title),node('small',f.check_id+' · '+((Object.hasOwn(categoryLabels,f.category)?categoryLabels[f.category]:f.category))));
   button.append(node('span','△','priority-icon'),text,node('span',severityLabels[f.severity]+' →'));
   button.addEventListener('click',()=>{statusFilter='ALL';$('category').value='ALL';$('severity').value='ALL';$('search').value=f.check_id;render();location.hash='findings';const first=$('findings').querySelector('details');if(first)first.open=true;});$('priorities').append(button);
  }
@@ -129,7 +132,7 @@ function navigate(){
 }
 async function showScan(){
  try{if(!demoData){const response=await fetch('demo.json');if(!response.ok)throw new Error();demoData=validateReport(await response.json());}
- $('scan-categories').replaceChildren();for(const category of [...new Set(demoData.findings.map(f=>f.category))]){const label=node('label'),input=node('input');input.type='checkbox';input.name='category';input.value=category;input.checked=true;label.append(input,node('span',categoryLabels[category]||category));$('scan-categories').append(label);}
+ $('scan-categories').replaceChildren();for(const category of [...new Set(demoData.findings.map(f=>f.category))]){const label=node('label'),input=node('input');input.type='checkbox';input.name='category';input.value=category;input.checked=true;label.append(input,node('span',(Object.hasOwn(categoryLabels,category)?categoryLabels[category]:category)));$('scan-categories').append(label);}
  $('scan-error').textContent='';$('scan-dialog').showModal();}catch{message('Örnek rapor yüklenemedi. Lütfen yeniden deneyin.');}
 }
 $('new-scan').addEventListener('click',showScan);$('guide-demo').addEventListener('click',showScan);$('close-scan').addEventListener('click',()=>$('scan-dialog').close());

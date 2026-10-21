@@ -228,3 +228,14 @@ def test_duplicate_host_and_origin_headers_are_rejected(service):
         connection.endheaders()
         assert connection.getresponse().status == 403
         connection.close()
+
+
+@pytest.mark.parametrize("method", ["PUT", "DELETE", "TRACE", "HEAD"])
+def test_unsupported_methods_have_private_hardened_errors(service, method):
+    status, headers, body = request(service, method=method)
+    assert status == 501
+    assert headers["Cache-Control"] == "no-store"
+    assert headers["X-Content-Type-Options"] == "nosniff"
+    assert headers["X-Frame-Options"] == "DENY"
+    assert "frame-ancestors 'none'" in headers["Content-Security-Policy"]
+    assert body == b""
