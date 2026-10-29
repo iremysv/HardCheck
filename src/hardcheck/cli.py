@@ -62,6 +62,9 @@ def main(argv: list[str] | None = None) -> int:
 
         return install_launcher(remove=arguments.command == "uninstall-launcher")
     if arguments.command == "serve":
+        if os.name != "posix":
+            print("Local service requires a POSIX operating system", file=sys.stderr)
+            return 2
         if not 1024 <= arguments.port <= 65535:
             print("Port must be between 1024 and 65535", file=sys.stderr)
             return 2

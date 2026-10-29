@@ -142,3 +142,56 @@ def test_desktop_exec_escaping():
     assert desktop.desktop_quote("/tmp/100%/python") == '"/tmp/100%%/python"'
     with pytest.raises(ValueError):
         desktop.desktop_quote("/tmp/injected\nExec=bad")
+
+
+@pytest.mark.parametrize("remove", [False, True])
+def test_launcher_rejects_managed_hardlinks_without_modifying_target(
+    tmp_path, monkeypatch, remove
+):
+    monkeypatch.setenv("XDG_DATA_HOME", str(tmp_path))
+    monkeypatch.setattr(desktop.platform, "system", lambda: "Linux")
+    applications = tmp_path / "applications"
+    applications.mkdir()
+    original = tmp_path / "private-file"
+    content = desktop.MARKER + "\nkeep this file\n"
+    original.write_text(content)
+    target = applications / "hardcheck.desktop"
+    os.link(original, target)
+    assert desktop.install_launcher(remove=remove) == 2
+    assert original.read_text() == content
+    assert target.read_text() == content
+
+
+@pytest.mark.parametrize("kind", ["fifo", "symlink", "shared-directory"])
+def test_launcher_rejects_unsafe_targets(tmp_path, monkeypatch, kind):
+    monkeypatch.setenv("XDG_DATA_HOME", str(tmp_path))
+    monkeypatch.setattr(desktop.platform, "system", lambda: "Linux")
+    applications = tmp_path / "applications"
+    applications.mkdir()
+    target = applications / "hardcheck.desktop"
+    original = tmp_path / "original"
+    original.write_text(desktop.MARKER + "\nkeep\n")
+    if kind == "fifo":
+        os.mkfifo(target)
+    elif kind == "symlink":
+        target.symlink_to(original)
+    else:
+        applications.chmod(0o777)
+    assert desktop.install_launcher() == 2
+    assert original.read_text() == desktop.MARKER + "\nkeep\n"
+
+
+def test_launcher_reinstall_preserves_single_file_and_valid_exec(tmp_path, monkeypatch):
+    monkeypatch.setenv("XDG_DATA_HOME", str(tmp_path))
+    monkeypatch.setattr(desktop.platform, "system", lambda: "Linux")
+    assert desktop.install_launcher() == 0
+    target = tmp_path / "applications/hardcheck.desktop"
+    first = target.read_text()
+    assert desktop.install_launcher() == 0
+    assert target.read_text() == first
+
+
+def test_non_posix_service_fails_without_importing_posix_launcher(monkeypatch, capsys):
+    monkeypatch.setattr(cli.os, "name", "nt")
+    assert cli.main(["serve"]) == 2
+    assert "POSIX" in capsys.readouterr().err

@@ -6,7 +6,10 @@ import json
 import platform
 import re
 import secrets
+import socket
 import threading
+import time
+from http.client import LineTooLong
 from http.cookies import CookieError, SimpleCookie
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from importlib.resources import files
@@ -93,16 +96,49 @@ class LocalServer(ThreadingHTTPServer):
     # Reclaim our TIME_WAIT address after exit, never share an active listener.
     allow_reuse_address = True
     allow_reuse_port = False
+    max_connections = 16
+    request_timeout = 10
+    session_lifetime = 8 * 60 * 60
 
     def __init__(self, port, identity_key, manager=None):
         self.manager = manager if manager is not None else ScanManager()
         self.identity_key = identity_key
         self.session = secrets.token_hex(32)
         self.csrf = secrets.token_hex(32)
+        self.session_expires = time.monotonic() + self.session_lifetime
+        self.connection_slots = threading.BoundedSemaphore(self.max_connections)
         super().__init__(("127.0.0.1", port), Handler)
         self.authority = f"127.0.0.1:{self.server_port}"
         self.origin = "http://" + self.authority
         self.cookie_name = f"hardcheck_{self.server_port}"
+
+    def process_request(self, request, client_address):
+        """Reject overload before allocating a worker or reading attacker data."""
+        if not self.connection_slots.acquire(blocking=False):
+            self.shutdown_request(request)
+            return
+        try:
+            super().process_request(request, client_address)
+        except Exception:
+            self.connection_slots.release()
+            raise
+
+    def process_request_thread(self, request, client_address):
+        """Bound total connection time, including clients dripping header bytes."""
+        def expire():
+            try:
+                request.shutdown(socket.SHUT_RDWR)
+            except OSError:
+                pass
+
+        timer = threading.Timer(self.request_timeout, expire)
+        timer.daemon = True
+        try:
+            timer.start()
+            super().process_request_thread(request, client_address)
+        finally:
+            timer.cancel()
+            self.connection_slots.release()
 
     def handle_error(self, request, client_address):
         """Do not log request data or private exception details."""
@@ -113,6 +149,27 @@ class Handler(BaseHTTPRequestHandler):
 
     server_version = "HardCheck"
     sys_version = ""
+
+    def parse_request(self):
+        """Limit aggregate header bytes, not just each individual header line."""
+        original = self.rfile
+
+        class HeaderReader:
+            remaining = 16384
+
+            def readline(self, size=-1):
+                limit = self.remaining + 1
+                line = original.readline(min(size, limit) if size >= 0 else limit)
+                self.remaining -= len(line)
+                if self.remaining < 0:
+                    raise LineTooLong("request headers")
+                return line
+
+        self.rfile = HeaderReader()
+        try:
+            return super().parse_request()
+        finally:
+            self.rfile = original
 
     def setup(self):
         super().setup()
@@ -143,7 +200,8 @@ class Handler(BaseHTTPRequestHandler):
             self.send_header(
                 "Set-Cookie",
                 f"{self.server.cookie_name}="
-                f"{self.server.session}; HttpOnly; SameSite=Strict; Path=/",
+                f"{self.server.session}; HttpOnly; SameSite=Strict; Path=/; "
+                f"Max-Age={self.server.session_lifetime}",
             )
         if download:
             self.send_header(
@@ -182,7 +240,10 @@ class Handler(BaseHTTPRequestHandler):
             value = cookie[self.server.cookie_name].value
         except (CookieError, KeyError, ValueError):
             value = ""
-        valid = hmac.compare_digest(value.encode(), self.server.session.encode())
+        valid = (
+            time.monotonic() < self.server.session_expires
+            and hmac.compare_digest(value.encode(), self.server.session.encode())
+        )
         if csrf:
             valid = valid and self.headers.get_all("X-HardCheck-CSRF") == [
                 self.server.csrf
@@ -204,6 +265,11 @@ class Handler(BaseHTTPRequestHandler):
             ).hexdigest()
             self.respond(200, json.dumps({"proof": proof}).encode())
         elif self.path in ("/", "/index.html"):
+            if time.monotonic() >= self.server.session_expires:
+                self.respond(
+                    403, b"Session expired. Restart HardCheck.", "text/plain"
+                )
+                return
             html = panel_asset("index.html").replace(
                 b"<!-- LOCAL_SESSION -->",
                 f'<meta name="hardcheck-csrf" content="{self.server.csrf}">'.encode(),

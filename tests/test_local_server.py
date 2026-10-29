@@ -239,3 +239,113 @@ def test_unsupported_methods_have_private_hardened_errors(service, method):
     assert headers["X-Frame-Options"] == "DENY"
     assert "frame-ancestors 'none'" in headers["Content-Security-Policy"]
     assert body == b""
+
+
+@pytest.mark.parametrize("token", ["", "invalid", "a" * 64])
+def test_invalid_csrf_cannot_start_scan(service, token):
+    headers = {**auth(service), "X-HardCheck-CSRF": token}
+    assert request(service, "/api/scan", "POST", headers)[0] == 403
+    assert service.manager.snapshot()["generation"] == 0
+
+
+def test_session_expires_on_server_and_cookie_has_bounded_lifetime(service):
+    headers = auth(service)
+    assert "Max-Age=28800" in request(service)[1]["Set-Cookie"]
+    service.session_expires = time.monotonic() - 1
+    for path in ("/api/status", "/api/report.json", "/api/report.html"):
+        assert request(service, path, headers=headers)[0] == 403
+    assert request(service, "/api/scan", "POST", headers)[0] == 403
+    status, response_headers, body = request(service)
+    assert status == 403
+    assert "Set-Cookie" not in response_headers
+    assert b"Restart HardCheck" in body
+    assert service.manager.snapshot()["generation"] == 0
+
+
+def test_http_admission_is_bounded_and_recovers(service):
+    import socket
+
+    connections = []
+    try:
+        for _ in range(service.max_connections):
+            client = socket.create_connection(("127.0.0.1", service.server_port), 1)
+            connections.append(client)
+            client.sendall(b"GET / HTTP/1.1\r\n")
+        deadline = time.monotonic() + 2
+        while service.connection_slots._value and time.monotonic() < deadline:
+            time.sleep(0.01)
+        assert service.connection_slots._value == 0
+        with socket.create_connection(("127.0.0.1", service.server_port), 1) as extra:
+            assert extra.recv(1) == b""
+    finally:
+        for client in connections:
+            client.close()
+    deadline = time.monotonic() + 2
+    while service.connection_slots._value != service.max_connections:
+        assert time.monotonic() < deadline
+        time.sleep(0.01)
+    assert request(service)[0] == 200
+
+
+def test_dripping_headers_cannot_extend_total_connection_deadline(service):
+    import socket
+
+    service.request_timeout = 0.2
+    started = time.monotonic()
+    with socket.create_connection(("127.0.0.1", service.server_port), 1) as client:
+        client.sendall(b"GET / HTTP/1.1\r\nX-Slow: ")
+        for _ in range(20):
+            time.sleep(0.03)
+            try:
+                client.sendall(b"x")
+                client.settimeout(0.001)
+                if client.recv(1) == b"":
+                    break
+            except TimeoutError:
+                continue
+            except (BrokenPipeError, ConnectionResetError):
+                break
+        else:
+            pytest.fail("Dripping client kept a worker past the total deadline")
+    assert time.monotonic() - started < 0.6
+    assert request(service)[0] == 200
+
+
+@pytest.mark.parametrize(
+    "path", [
+        "/%2e%2e/pyproject.toml", "/api/report.json/../identity",
+        "/session.json", "/instance.lock",
+    ],
+)
+def test_http_does_not_expose_arbitrary_files(service, path):
+    assert request(service, path, headers=auth(service))[0] == 404
+
+
+def test_completed_http_report_escapes_hostile_finding_content(service, result):
+    from dataclasses import replace
+
+    payload = '<img src=x onerror="alert(1)">'
+    service.manager.runner = lambda: [replace(
+        result, check_id=payload, category=payload, reference="javascript:alert(1)"
+    )]
+    headers = auth(service)
+    assert request(service, "/api/scan", "POST", headers)[0] == 202
+    wait_for(service.manager, "completed")
+    status, response_headers, body = request(
+        service, "/api/report.html", headers=headers
+    )
+    assert status == 200
+    assert payload.encode() not in body
+    assert b"&lt;img" in body
+    assert b'href="javascript:' not in body
+    assert response_headers["Cache-Control"] == "no-store"
+    assert request(service, "/api/report.html")[0] == 403
+
+
+def test_aggregate_header_size_is_bounded_without_reflecting_values(service):
+    headers = {"X-Fixture-" + str(i): "a" * 1024 for i in range(20)}
+    status, response_headers, body = request(service, headers=headers)
+    assert status == 431
+    assert body == b""
+    assert response_headers["Cache-Control"] == "no-store"
+    assert request(service)[0] == 200

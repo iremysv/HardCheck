@@ -2,6 +2,7 @@
 
 import os
 import platform
+import stat
 import sys
 from pathlib import Path
 
@@ -30,14 +31,6 @@ def install_launcher(remove=False):
         return 2
     target = base / "applications/hardcheck.desktop"
     try:
-        if target.is_symlink() or (
-            target.exists() and MARKER not in target.read_text()
-        ):
-            raise ValueError("Unmanaged launcher")
-        if remove:
-            target.unlink(missing_ok=True)
-            print("HardCheck başlatıcısı kaldırıldı.")
-            return 0
         target.parent.mkdir(parents=True, exist_ok=True)
         # Preserve the venv path: resolving the Python symlink would lose the venv.
         executable = desktop_quote(os.path.abspath(sys.executable))
@@ -48,13 +41,48 @@ def install_launcher(remove=False):
             "Icon=security-high\nTerminal=false\nCategories=System;Security;\n"
             "StartupNotify=false\n" + MARKER + "\n"
         )
-        descriptor = os.open(target, os.O_WRONLY | os.O_CREAT | os.O_NOFOLLOW, 0o644)
-        with os.fdopen(descriptor, "w") as stream:
-            stream.truncate(0)
-            stream.write(content)
+        parent_fd = os.open(target.parent, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
+        try:
+            parent = os.fstat(parent_fd)
+            if parent.st_uid != os.getuid() or parent.st_mode & 0o022:
+                raise ValueError("Unsafe launcher directory")
+            flags = os.O_RDWR | os.O_NOFOLLOW | os.O_NONBLOCK
+            try:
+                descriptor = os.open(target.name, flags, dir_fd=parent_fd)
+            except FileNotFoundError:
+                descriptor = None if remove else os.open(
+                    target.name, flags | os.O_CREAT | os.O_EXCL, 0o644,
+                    dir_fd=parent_fd,
+                )
+                new = True
+            else:
+                new = False
+            if descriptor is not None:
+                with os.fdopen(descriptor, "r+", encoding="utf-8") as stream:
+                    metadata = os.fstat(stream.fileno())
+                    if (
+                        not stat.S_ISREG(metadata.st_mode)
+                        or metadata.st_uid != os.getuid()
+                        or metadata.st_nlink != 1
+                        or metadata.st_mode & 0o022
+                    ):
+                        raise ValueError("Unsafe launcher file")
+                    if not new and MARKER not in stream.read(65537).splitlines():
+                        raise ValueError("Unmanaged launcher")
+                    if remove:
+                        os.unlink(target.name, dir_fd=parent_fd)
+                    else:
+                        stream.seek(0)
+                        stream.truncate(0)
+                        stream.write(content)
+        finally:
+            os.close(parent_fd)
+        if remove:
+            print("HardCheck başlatıcısı kaldırıldı.")
+            return 0
         print("HardCheck uygulama menüsüne eklendi. Menüyü yeniden açın.")
         return 0
-    except (OSError, ValueError):
+    except (OSError, ValueError, UnicodeError):
         print(
             "Başlatıcı güncellenemedi; mevcut kullanıcı dosyaları korundu.",
             file=sys.stderr,

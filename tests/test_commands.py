@@ -107,3 +107,23 @@ def test_invalid_query_output_is_not_replaced_into_valid_text(monkeypatch):
     result = commands.run_query("fixture")
     assert result.state == "error"
     assert result.output == ""
+
+
+@pytest.mark.parametrize(
+    "name", ["nft; touch sentinel", "$(id)", "--help", "nft\nwhoami"]
+)
+def test_command_injection_never_reaches_process_creation(monkeypatch, name):
+    def forbidden(*args, **kwargs):
+        pytest.fail("Unrecognized query reached process creation")
+
+    monkeypatch.setattr(commands.subprocess, "Popen", forbidden)
+    assert commands.run_query(name).state == "error"
+
+
+def test_hostile_path_cannot_supply_query_binary(tmp_path, monkeypatch):
+    binary = tmp_path / "nft"
+    binary.write_text("#!/bin/sh\nexit 99\n")
+    binary.chmod(0o755)
+    monkeypatch.setenv("PATH", str(tmp_path))
+    resolved = commands.resolve_binary("nft")
+    assert resolved is None or resolved != binary

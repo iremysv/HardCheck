@@ -89,6 +89,11 @@ Never delete or replace `instance.lock` while a service is running.
   Normal page and download GETs can omit Origin. All responses use no-store,
   frame denial, no-referrer and restrictive CSP. Plain HTTP stays on loopback;
   the cookie deliberately has no Secure flag for this HTTP-only transport.
+- Sessions expire after eight hours on both the server and cookie. Restart
+  HardCheck after expiry; reloading the page does not extend the server deadline.
+  At most 16 HTTP connections have workers, each with a ten-second total
+  connection deadline (including slowly delivered headers) and a 16 KiB
+  aggregate header budget. Excess connections are closed before worker creation.
 - The threat boundary is hostile websites, cross-origin requests and DNS
   rebinding, not malicious software already running on this computer. Other
   local processes can make loopback requests; the local account, browser and
@@ -107,6 +112,11 @@ Never delete or replace `instance.lock` while a service is running.
   owns the instance lifetime; the lock inode stays stable. A private random key
   authenticates reuse with a fresh HMAC challenge. A PID alone is never trusted.
   Stale state can be replaced only after acquiring the operating-system lock.
+- Launcher installation validates the opened application directory and file,
+  rejects shared directories, symlinks, hardlinks and special files, and reads
+  the managed marker through the same descriptor used for writing. New files
+  use exclusive creation; existing unrelated entries are preserved. Ancestor
+  directories and processes running as the same user remain trusted.
 - Reports remain in service memory until replaced or the process ends. They use
   the existing sanitized report contract; raw probe output, password hashes and
   exception details are never added. Downloaded files are private user data;
